@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrawlGen | Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 font-sans flex items-center justify-center h-screen p-6">
+    <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden animate-fade-up">
+        <div class="p-8">
+            <div class="flex items-center gap-3 text-2xl font-black text-slate-900 mb-8 justify-center tracking-tighter">
+                <div class="w-10 h-10 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <img src="/logo.png" alt="Logo" class="w-full h-full object-cover">
+                </div>
+                <span>CRAWLGEN</span>
+            </div>
+
+            <div id="login-view">
+                <h2 class="text-xl font-bold mb-2">Welcome Back</h2>
+                <p class="text-slate-500 text-sm mb-6">Login to manage your intelligence agents</p>
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Username</label>
+                        <input type="text" id="login-username" required class="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black/10">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Password</label>
+                        <input type="password" id="login-password" required class="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black/10">
+                    </div>
+                    <button type="submit" class="w-full bg-black text-white py-3 rounded-lg font-bold hover:opacity-90 transition-opacity">Login</button>
+                </form>
+                <p class="text-center mt-6 text-sm text-slate-500">
+                    Don't have an account? <button onclick="toggleView('register')" class="text-black font-bold hover:underline">Register</button>
+                </p>
+            </div>
+
+            <div id="register-view" class="hidden">
+                <h2 class="text-xl font-bold mb-2">Create Account</h2>
+                <p class="text-slate-500 text-sm mb-6">Join the CrawlGen network</p>
+                <form id="register-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Username</label>
+                        <input type="text" id="reg-username" required class="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black/10">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Password</label>
+                        <input type="password" id="reg-password" required class="w-full border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black/10">
+                    </div>
+                    <button type="submit" class="w-full bg-black text-white py-3 rounded-lg font-bold hover:opacity-90 transition-opacity">Register</button>
+                </form>
+                <p class="text-center mt-6 text-sm text-slate-500">
+                    Already have an account? <button onclick="toggleView('login')" class="text-black font-bold hover:underline">Login</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function toggleView(view) {
+            document.getElementById('login-view').classList.toggle('hidden', view === 'register');
+            document.getElementById('register-view').classList.toggle('hidden', view === 'login');
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = '/';
+            } else {
+                alert(data.message);
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Registration successful! Please login.');
+                toggleView('login');
+            } else {
+                alert(data.message);
+            }
+        });
+    </script>
+
+    <style>
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fade-up 0.5s ease-out forwards; }
+    </style>
+</body>
+</html>
