@@ -1,10 +1,6 @@
 const db = require('../utils/db');
 
-const DAILY_LIMITS = {
-    free: 500,
-    pro: 50000,
-    enterprise: Infinity,
-};
+
 
 /**
  * Middleware: Check daily API quota per key.
@@ -16,9 +12,9 @@ module.exports = async function quotaMiddleware(req, res, next) {
         if (!keyId) return next(); // session-based (dashboard user), no quota
 
         const plan = req.userPlan || 'free';
-        const limit = DAILY_LIMITS[plan] ?? DAILY_LIMITS.free;
+        const limit = req.planLimit ?? 500;
 
-        if (limit === Infinity) return next();
+        if (limit >= 999999) return next(); // Enterprise/Unlimited
 
         const count = await db.getTodayRequestCount(keyId);
         if (count >= limit) {

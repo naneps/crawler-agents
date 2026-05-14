@@ -26,7 +26,7 @@ const requireCredential = async (req, res, next) => {
         let user;
 
         if (keyRecord) {
-            user = await db.getUserById(keyRecord.user_id);
+            user = keyRecord.user;
             req.apiKeyId = keyRecord.id;
         } else {
             // Fallback to legacy single key in users table
@@ -35,7 +35,10 @@ const requireCredential = async (req, res, next) => {
 
         if (user) {
             req.user = user;
-            req.userPlan = user.plan || 'free';
+            // Get plan name from active subscription
+            const activeSub = user.subscriptions && user.subscriptions[0];
+            req.userPlan = activeSub ? activeSub.plan.name : 'free';
+            req.planLimit = activeSub ? activeSub.plan.maxRequestsDay : 500;
             
             // Log analytics after response is sent
             res.on('finish', () => {

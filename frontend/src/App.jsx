@@ -33,6 +33,9 @@ import ApiReference from './components/ApiReference';
 import KeyManager from './components/KeyManager';
 import PlatformDashboard from './components/PlatformDashboard';
 import Landing from './components/Landing';
+import CategorySelector from './components/CategorySelector';
+import PlanManager from './components/PlanManager';
+import UserManager from './components/UserManager';
 
 function Dialog({ isOpen, title, message, onConfirm, onCancel, type = 'danger' }) {
   if (!isOpen) return null;
@@ -91,6 +94,8 @@ export default function App() {
     if (location.pathname.startsWith('/docs')) return 'docs';
     if (location.pathname.startsWith('/keys')) return 'keys';
     if (location.pathname.startsWith('/admin/dashboard')) return 'dashboard';
+    if (location.pathname.startsWith('/admin/users')) return 'admin-users';
+    if (location.pathname.startsWith('/admin/plans')) return 'admin-plans';
     return 'feed';
   }, [location.pathname]);
 
@@ -287,55 +292,49 @@ export default function App() {
 
       <main className="flex-1 flex flex-col min-w-0 bg-background text-foreground transition-all duration-500 overflow-hidden relative">
         <header className="h-14 border-b border-border bg-background/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-40">
-          <div className="flex items-center gap-8 min-w-0">
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-lg shadow-primary/5">
-                <Activity className="w-4 h-4" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-foreground tracking-tight line-clamp-1">
-                  {activeTab === 'feed' ? (sources[currentSource]?.name || 'Neural Stream') : 
-                   activeTab === 'sources' ? 'Source Management' : 
-                   activeTab === 'keys' ? 'API Keys' : 
-                   activeTab === 'dashboard' ? 'Platform Analytics' :
-                   activeTab === 'docs' ? 'API Reference' : 'CrawlGen Intelligence'}
-                </h2>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
-                    {activeTab === 'feed' ? 'Neural Stream Active' : 'System Node Secure'}
-                  </span>
-                </div>
+          {/* Left: Source Info */}
+          <div className="flex items-center gap-3 shrink-0 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-lg shadow-primary/5">
+              <Activity className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-foreground tracking-tight line-clamp-1">
+                {activeTab === 'feed' ? (sources[currentSource]?.name || 'Neural Stream') : 
+                 activeTab === 'sources' ? 'Source Management' : 
+                 activeTab === 'keys' ? 'API Keys' : 
+                 activeTab === 'dashboard' ? 'Platform Analytics' :
+                 activeTab === 'admin-users' ? 'Operator Matrix' :
+                 activeTab === 'admin-plans' ? 'Neural Tiers' :
+                 activeTab === 'docs' ? 'API Reference' : 'CrawlGen Intelligence'}
+              </h2>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                  {activeTab === 'feed' ? 'Neural Stream Active' : 'System Node Secure'}
+                </span>
               </div>
             </div>
-
-            {activeTab === 'feed' && sources[currentSource]?.categories && (
-              <Tabs value={currentCategory} className="hidden xl:block">
-                <TabsList className="bg-muted/50 h-8 p-1">
-                  {Object.keys(sources[currentSource].categories).map(cat => (
-                    <TabsTrigger
-                      key={cat}
-                      value={cat}
-                      onClick={() => navigate(`/feed/${currentSource}/${cat}`)}
-                      className="text-[9px] font-black uppercase tracking-widest px-3 h-6"
-                    >
-                      {cat}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-            )}
           </div>
 
+          {/* Right: Controls (Category & Search) */}
           <div className="flex items-center gap-3">
+            {activeTab === 'feed' && sources[currentSource]?.categories && (
+              <CategorySelector
+                categories={sources[currentSource].categories}
+                currentCategory={currentCategory}
+                onSelect={(cat) => navigate(`/feed/${currentSource}/${cat}`)}
+              />
+            )}
+            
             <div className="relative group hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
               <Input
                 type="text"
                 placeholder="Search stream..."
-                className="pl-9 h-8 text-[11px] font-medium w-48 bg-muted/40 border-none focus-visible:ring-1 focus-visible:ring-primary/40 rounded-lg"
+                className="pl-9 h-9 text-[11px] font-medium w-48 bg-muted/40 border-none focus-visible:ring-1 focus-visible:ring-primary/40 rounded-lg"
               />
             </div>
+            
             <Button
               variant="ghost"
               size="icon"
@@ -378,6 +377,8 @@ export default function App() {
               )
             } />
             <Route path="/admin/dashboard" element={<PlatformDashboard />} />
+            <Route path="/admin/plans" element={<PlanManager />} />
+            <Route path="/admin/users" element={<UserManager />} />
             <Route path="/sources" element={
               <SourcesInventory 
                 sourcesList={sourcesList} 

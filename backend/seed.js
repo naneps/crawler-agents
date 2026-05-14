@@ -1,17 +1,32 @@
 const db = require('./src/utils/db');
+const prisma = require('./src/utils/prisma');
 const sourcesConfig = require('./src/config/sources');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 async function seed() {
-  console.log('🚀 Starting migration to MySQL...');
+  console.log('🚀 Starting Prisma Data Migration...');
   
   try {
-    await db.initDb();
-    console.log('✅ Database initialized.');
+    // 1. Initialize Plans (Ensure plans exist)
+    const plans = [
+      { name: 'free', price: 0, maxRequestsDay: 500, features: { sources: 'all' } },
+      { name: 'pro', price: 29.00, maxRequestsDay: 50000, features: { sources: 'all', support: 'email' } },
+      { name: 'enterprise', price: 999.00, maxRequestsDay: 999999, features: { sources: 'all', sla: '99.9%' } }
+    ];
 
+    for (const p of plans) {
+      await prisma.plan.upsert({
+        where: { name: p.name },
+        update: p,
+        create: p
+      });
+    }
+    console.log('✅ Plans initialized.');
+
+    // 2. Migrate Sources
     for (const [id, config] of Object.entries(sourcesConfig)) {
-      console.log(`📦 Migrating: ${config.name} (${id})...`);
+      console.log(`📦 Migrating source: ${config.name} (${id})...`);
       await db.upsertSource(
         id,
         config.name,
@@ -21,40 +36,31 @@ async function seed() {
       );
     }
 
-    // Default Admin User
+    // 3. Default Admin User
     const adminEmail = 'admin@crawlgen.ai';
     const adminPass = 'password';
     
-    const existingAdmin = await db.getUserByUsername(adminEmail);
-    if (!existingAdmin) {
+    let admin = await db.getUserByUsername(adminEmail);
+    if (!admin) {
       console.log(`👤 Creating default admin: ${adminEmail}...`);
       const hashedPassword = await bcrypt.hash(adminPass, 10);
       const apiKey = crypto.randomBytes(24).toString('hex');
-      await db.createUser(adminEmail, hashedPassword, apiKey, 'admin');
+      admin = await db.createUser(adminEmail, hashedPassword, apiKey, 'admin');
       console.log('✅ Admin user created.');
     } else {
-      console.log('ℹ️ Admin user already exists. Resetting password to "password"...');
+      console.log('ℹ️ Admin user already exists. Resetting password...');
       const hashedPassword = await bcrypt.hash(adminPass, 10);
-      await db.pool.query('UPDATE users SET password = ? WHERE username = ?', [hashedPassword, adminEmail]);
-      console.log('✅ Admin password reset.');
+      await prisma.user.update({
+        where: { id: admin.id },
+        data: { password: hashedPassword }
+      });
+      console.log('✅ Admin password updated.');
     }
 
-    // Secondary Admin for testing
-    const testAdmin = 'admin@crawlgen.com';
-    const testPass = 'admin123';
-    const existingTest = await db.getUserByUsername(testAdmin);
-    if (!existingTest) {
-      console.log(`👤 Creating test admin: ${testAdmin}...`);
-      const hashedPassword = await bcrypt.hash(testPass, 10);
-      const apiKey = crypto.randomBytes(24).toString('hex');
-      await db.createUser(testAdmin, hashedPassword, apiKey, 'admin');
-      console.log('✅ Test admin created.');
-    }
-
-    console.log('\n✨ Migration complete! All sources are now in MySQL.');
+    console.log('\n✨ Database sync complete!');
     process.exit(0);
   } catch (error) {
-    console.error('\n❌ Migration failed:', error.message);
+    console.error('\n❌ Sync failed:', error.stack);
     process.exit(1);
   }
 }

@@ -115,6 +115,13 @@ router.get('/news/:source/:category', requireCredential, quota, newsController.g
 // Admin Platform Management
 router.get('/admin/stats', requireAdmin, adminController.getStats);
 router.get('/admin/users', requireAdmin, adminController.getUsers);
+router.post('/admin/users/:id/plan', requireAdmin, adminController.setUserPlan);
+
+router.get('/admin/plans', requireAdmin, adminController.getPlans);
+router.post('/admin/plans', requireAdmin, adminController.upsertPlan);
+router.delete('/admin/plans/:id', requireAdmin, adminController.deletePlan);
+
+router.get('/admin/subscriptions', requireAdmin, adminController.getSubscriptions);
 
 router.get('/sources', requireAdmin, sourceController.getAllSources);
 router.post('/sources', requireAdmin, sourceController.upsertSource);

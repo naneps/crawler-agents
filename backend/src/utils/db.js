@@ -1,228 +1,345 @@
-const mysql = require('mysql2/promise');
-
-const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'crawlgen',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-async function initDb() {
-  const connection = await pool.getConnection();
-  try {
-    // Sources Table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS sources (
-        id VARCHAR(50) PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        baseUrl TEXT NOT NULL,
-        categories JSON NOT NULL,
-        selectors JSON NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Users Table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        api_key VARCHAR(100) UNIQUE NOT NULL,
-        role ENUM('admin', 'user') DEFAULT 'user',
-        plan ENUM('free', 'pro', 'enterprise') DEFAULT 'free',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Add plan column if upgrading existing DB
-    try {
-      await connection.query(`ALTER TABLE users ADD COLUMN plan ENUM('free','pro','enterprise') DEFAULT 'free'`);
-    } catch (_) { /* column already exists */ }
-
-    // API Keys Table (New)
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS api_keys (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        key_value VARCHAR(100) UNIQUE NOT NULL,
-        is_active BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `);
-
-    // API Logs Table (New)
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS api_logs (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        key_id INT NOT NULL,
-        endpoint VARCHAR(255) NOT NULL,
-        method VARCHAR(10) NOT NULL,
-        status_code INT NOT NULL,
-        response_time INT NOT NULL,
-        ip_address VARCHAR(45),
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (key_id) REFERENCES api_keys(id) ON DELETE CASCADE
-      )
-    `);
-  } finally {
-    connection.release();
-  }
-}
+const prisma = require('./prisma');
 
 module.exports = {
-  pool,
-  initDb,
-  // CRUD operations
+  // Legacy support for scripts that might need the pool, but we should phase it out
+  pool: null, 
+
+  async initDb() {
+    // No-op with Prisma as we use migrations/db push
+    console.log('✅ DB initialized (Prisma Managed)');
+  },
+
+  // CRUD operations: Sources
   async getAllSources() {
-    const [rows] = await pool.query('SELECT * FROM sources ORDER BY name ASC');
-    return rows;
+    return await prisma.source.findMany({
+      orderBy: { name: 'asc' }
+    });
   },
+
   async getSourceById(id) {
-    const [rows] = await pool.query('SELECT * FROM sources WHERE id = ?', [id]);
-    return rows[0];
+    return await prisma.source.findUnique({
+      where: { id }
+    });
   },
+
   async upsertSource(id, name, baseUrl, categories, selectors) {
-    const [rows] = await pool.query(
-      'INSERT INTO sources (id, name, baseUrl, categories, selectors) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=?, baseUrl=?, categories=?, selectors=?',
-      [id, name, baseUrl, JSON.stringify(categories), JSON.stringify(selectors), name, baseUrl, JSON.stringify(categories), JSON.stringify(selectors)]
-    );
-    return rows;
+    return await prisma.source.upsert({
+      where: { id },
+      update: { name, baseUrl, categories, selectors },
+      create: { id, name, baseUrl, categories, selectors }
+    });
   },
+
   async deleteSource(id) {
-    const [rows] = await pool.query('DELETE FROM sources WHERE id = ?', [id]);
-    return rows;
+    return await prisma.source.delete({
+      where: { id }
+    });
   },
-  // User & API Key Operations
+
+  // User Operations
   async getUserByUsername(username) {
-    const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-    return rows[0];
+    return await prisma.user.findUnique({
+      where: { username },
+      include: {
+        subscriptions: {
+          where: { status: 'active' },
+          include: { plan: true }
+        }
+      }
+    });
   },
+
   async getUserById(id) {
-    const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
-    return rows[0];
+    return await prisma.user.findUnique({
+      where: { id },
+      include: {
+        subscriptions: {
+          where: { status: 'active' },
+          include: { plan: true }
+        }
+      }
+    });
   },
+
   async getUserByApiKey(apiKey) {
-    const [rows] = await pool.query('SELECT * FROM users WHERE api_key = ?', [apiKey]);
-    return rows[0];
+    return await prisma.user.findUnique({
+      where: { apiKey },
+      include: {
+        subscriptions: {
+          where: { status: 'active' },
+          include: { plan: true }
+        }
+      }
+    });
   },
+
   async createUser(username, hashedPassword, apiKey, role = 'user') {
-    const [rows] = await pool.query(
-      'INSERT INTO users (username, password, api_key, role) VALUES (?, ?, ?, ?)',
-      [username, hashedPassword, apiKey, role]
-    );
-    return rows;
+    return await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          username,
+          password: hashedPassword,
+          apiKey,
+          role
+        }
+      });
+
+      // Default to free plan
+      const freePlan = await tx.plan.findUnique({ where: { name: 'free' } });
+      if (freePlan) {
+        await tx.subscription.create({
+          data: {
+            userId: user.id,
+            planId: freePlan.id,
+            status: 'active'
+          }
+        });
+      }
+      return user;
+    });
   },
+
   async updateApiKey(userId, newApiKey) {
-    const [rows] = await pool.query('UPDATE users SET api_key = ? WHERE id = ?', [newApiKey, userId]);
-    return rows;
+    return await prisma.user.update({
+      where: { id: userId },
+      data: { apiKey: newApiKey }
+    });
   },
-  
+
   // Multi-API Key Operations
   async getUserApiKeys(userId) {
-    const [rows] = await pool.query('SELECT * FROM api_keys WHERE user_id = ? ORDER BY created_at DESC', [userId]);
-    return rows;
+    return await prisma.apiKey.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
   },
 
   async createApiKey(userId, name, key) {
-    const [rows] = await pool.query(
-      'INSERT INTO api_keys (user_id, name, key_value) VALUES (?, ?, ?)',
-      [userId, name, key]
-    );
-    return rows;
+    return await prisma.apiKey.create({
+      data: {
+        userId,
+        name,
+        keyValue: key
+      }
+    });
   },
 
   async deleteApiKey(userId, keyId) {
-    const [rows] = await pool.query('DELETE FROM api_keys WHERE id = ? AND user_id = ?', [keyId, userId]);
-    return rows;
+    return await prisma.apiKey.delete({
+      where: { id: keyId, userId }
+    });
   },
 
   async getApiKeyByKey(key) {
-    const [rows] = await pool.query('SELECT * FROM api_keys WHERE key_value = ? AND is_active = 1', [key]);
-    return rows[0];
+    return await prisma.apiKey.findUnique({
+      where: { keyValue: key, isActive: true },
+      include: {
+        user: {
+          include: {
+            subscriptions: {
+              where: { status: 'active' },
+              include: { plan: true }
+            }
+          }
+        }
+      }
+    });
   },
 
   // API Logging & Stats
   async logApiRequest(keyId, endpoint, method, statusCode, responseTime, ip) {
-    await pool.query(
-      'INSERT INTO api_logs (key_id, endpoint, method, status_code, response_time, ip_address) VALUES (?, ?, ?, ?, ?, ?)',
-      [keyId, endpoint, method, statusCode, responseTime, ip]
-    );
+    return await prisma.apiLog.create({
+      data: {
+        keyId,
+        endpoint,
+        method,
+        statusCode,
+        responseTime,
+        ipAddress: ip
+      }
+    });
   },
 
   async getApiKeyStats(userId) {
-    const [rows] = await pool.query(`
-      SELECT 
-        ak.id, ak.name, ak.key_value, ak.created_at,
-        COUNT(al.id) as total_hits,
-        AVG(al.response_time) as avg_latency,
-        SUM(CASE WHEN al.status_code >= 400 THEN 1 ELSE 0 END) as error_count
-      FROM api_keys ak
-      LEFT JOIN api_logs al ON ak.id = al.key_id
-      WHERE ak.user_id = ?
-      GROUP BY ak.id
-      ORDER BY ak.created_at DESC
-    `, [userId]);
-    return rows;
+    // Prisma aggregate/group by can be complex for this specific output, 
+    // but we can fetch and map or use raw if needed.
+    // Let's try to fetch with includes and map.
+    const keys = await prisma.apiKey.findMany({
+      where: { userId },
+      include: {
+        _count: {
+          select: { logs: true }
+        },
+        logs: {
+          select: { responseTime: true, statusCode: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return keys.map(k => {
+      const totalHits = k._count.logs;
+      const errorCount = k.logs.filter(l => l.statusCode >= 400).length;
+      const avgLatency = totalHits > 0 
+        ? k.logs.reduce((acc, l) => acc + l.responseTime, 0) / totalHits 
+        : 0;
+
+      return {
+        id: k.id,
+        name: k.name,
+        key_value: k.keyValue,
+        created_at: k.createdAt,
+        total_hits: totalHits,
+        avg_latency: avgLatency,
+        error_count: errorCount
+      };
+    });
   },
 
   async getApiKeyLogs(userId, keyId, limit = 50) {
-    const [rows] = await pool.query(`
-      SELECT al.* 
-      FROM api_logs al
-      JOIN api_keys ak ON al.key_id = ak.id
-      WHERE ak.id = ? AND ak.user_id = ?
-      ORDER BY al.timestamp DESC
-      LIMIT ?
-    `, [keyId, userId, limit]);
-    return rows;
+    return await prisma.apiLog.findMany({
+      where: {
+        keyId,
+        apiKey: { userId }
+      },
+      orderBy: { timestamp: 'desc' },
+      take: limit
+    });
   },
+
   // Quota helpers
   async getTodayRequestCount(keyId) {
-    const [rows] = await pool.query(
-      `SELECT COUNT(*) as count FROM api_logs WHERE key_id = ? AND DATE(timestamp) = CURDATE()`,
-      [keyId]
-    );
-    return rows[0]?.count || 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return await prisma.apiLog.count({
+      where: {
+        keyId,
+        timestamp: { gte: today }
+      }
+    });
   },
 
   async getUserPlan(userId) {
-    const [rows] = await pool.query('SELECT plan FROM users WHERE id = ?', [userId]);
-    return rows[0]?.plan || 'free';
+    const sub = await prisma.subscription.findFirst({
+      where: { userId, status: 'active' },
+      include: { plan: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    return sub?.plan?.name || 'free';
   },
 
-  async setUserPlan(userId, plan) {
-    await pool.query('UPDATE users SET plan = ? WHERE id = ?', [plan, userId]);
+  async setUserPlan(userId, planName) {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Deactivate current subscriptions
+      await tx.subscription.updateMany({
+        where: { userId, status: 'active' },
+        data: { status: 'expired', endDate: new Date() }
+      });
+
+      // 2. Find new plan
+      const plan = await tx.plan.findUnique({ where: { name: planName } });
+      if (!plan) throw new Error(`Plan ${planName} not found`);
+
+      // 3. Create new subscription
+      return await tx.subscription.create({
+        data: {
+          userId,
+          planId: plan.id,
+          status: 'active'
+        }
+      });
+    });
   },
 
   async getGlobalStats() {
-    const [[users]] = await pool.query('SELECT COUNT(*) as count FROM users');
-    const [[keys]] = await pool.query('SELECT COUNT(*) as count FROM api_keys');
-    const [[logs]] = await pool.query('SELECT COUNT(*) as count FROM api_logs');
-    const [[sources]] = await pool.query('SELECT COUNT(*) as count FROM sources');
-    
-    // Get activity over last 7 days
-    const [activity] = await pool.query(`
+    const totalUsers = await prisma.user.count();
+    const totalKeys = await prisma.apiKey.count();
+    const totalLogs = await prisma.apiLog.count();
+    const totalSources = await prisma.source.count();
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Activity over last 7 days (grouped by date)
+    // Prisma's groupBy by Date is tricky in MySQL, we'll use a raw query for this.
+    const activity = await prisma.$queryRaw`
       SELECT DATE(timestamp) as date, COUNT(*) as hits 
       FROM api_logs 
-      WHERE timestamp > DATE_SUB(NOW(), INTERVAL 7 DAY)
+      WHERE timestamp > ${sevenDaysAgo}
       GROUP BY DATE(timestamp)
       ORDER BY date ASC
-    `);
+    `;
 
     return {
-      totalUsers: users.count,
-      totalKeys: keys.count,
-      totalLogs: logs.count,
-      totalSources: sources.count,
+      totalUsers,
+      totalKeys,
+      totalLogs,
+      totalSources,
       activity
     };
   },
-  pool
+
+  // Admin: User Management
+  async getAllUsers() {
+    return await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        createdAt: true,
+        subscriptions: {
+          where: { status: 'active' },
+          include: { plan: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  },
+
+  // Admin: Plan Management
+  async getAllPlans() {
+    return await prisma.plan.findMany({
+      orderBy: { price: 'asc' }
+    });
+  },
+
+  async upsertPlan(id, data) {
+    if (id) {
+      return await prisma.plan.update({
+        where: { id: parseInt(id) },
+        data: {
+          name: data.name,
+          price: data.price,
+          maxRequestsDay: data.maxRequestsDay,
+          features: data.features
+        }
+      });
+    }
+    return await prisma.plan.create({
+      data: {
+        name: data.name,
+        price: data.price,
+        maxRequestsDay: data.maxRequestsDay,
+        features: data.features
+      }
+    });
+  },
+
+  async deletePlan(id) {
+    return await prisma.plan.delete({
+      where: { id: parseInt(id) }
+    });
+  },
+
+  // Admin: Subscription Management
+  async getAllSubscriptions() {
+    return await prisma.subscription.findMany({
+      include: {
+        user: { select: { username: true } },
+        plan: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 };
