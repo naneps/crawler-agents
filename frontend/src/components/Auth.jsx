@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export default function Auth({ onLogin, theme, toggleTheme }) {
-  const [authView, setAuthView] = useState('login');
+export default function Auth({ onLogin, theme, toggleTheme, defaultView = 'login' }) {
+  const [authView, setAuthView] = useState(defaultView);
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,9 +23,16 @@ export default function Auth({ onLogin, theme, toggleTheme }) {
       const res = await axios.post(endpoint, formData);
       if (res.data.success) {
         if (authView === 'register') {
+          // Auto-login after registration, redirect to /keys
+          try {
+            const loginRes = await axios.post('/api/auth/login', formData);
+            if (loginRes.data.success) {
+              await onLogin('/keys');
+              return;
+            }
+          } catch (_) {}
           setAuthView('login');
           setFormData({ username: '', password: '' });
-          alert('Registration successful! Please login.');
         } else {
           onLogin();
         }

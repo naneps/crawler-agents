@@ -32,6 +32,7 @@ import Auth from './components/Auth';
 import ApiReference from './components/ApiReference';
 import KeyManager from './components/KeyManager';
 import PlatformDashboard from './components/PlatformDashboard';
+import Landing from './components/Landing';
 
 function Dialog({ isOpen, title, message, onConfirm, onCancel, type = 'danger' }) {
   if (!isOpen) return null;
@@ -143,7 +144,7 @@ export default function App() {
     setSelectedArticle(null);
   }, [location.pathname]);
 
-  const checkAuth = async () => {
+  const checkAuth = async (redirectTo) => {
     try {
       const res = await axios.get('/api/auth/me');
       console.log('🔐 Auth Check:', res.data);
@@ -153,6 +154,7 @@ export default function App() {
           role: res.data.role || 'user',
           apiKey: res.data.apiKey || res.data.api_key || '' 
         });
+        if (redirectTo) navigate(redirectTo);
       } else {
         setUser(null);
       }
@@ -245,7 +247,29 @@ export default function App() {
     </div>
   );
 
-  if (!user) return <Auth onLogin={checkAuth} theme={theme} toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} />;
+  // Unauthenticated: show Landing at /, Auth at /login and /register
+  if (!user) return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={
+        <Auth
+          onLogin={checkAuth}
+          theme={theme}
+          toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          defaultView="login"
+        />
+      } />
+      <Route path="/register" element={
+        <Auth
+          onLogin={checkAuth}
+          theme={theme}
+          toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          defaultView="register"
+        />
+      } />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

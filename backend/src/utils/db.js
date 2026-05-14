@@ -34,9 +34,15 @@ async function initDb() {
         password VARCHAR(255) NOT NULL,
         api_key VARCHAR(100) UNIQUE NOT NULL,
         role ENUM('admin', 'user') DEFAULT 'user',
+        plan ENUM('free', 'pro', 'enterprise') DEFAULT 'free',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Add plan column if upgrading existing DB
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN plan ENUM('free','pro','enterprise') DEFAULT 'free'`);
+    } catch (_) { /* column already exists */ }
 
     // API Keys Table (New)
     await connection.query(`
@@ -177,6 +183,24 @@ module.exports = {
     `, [keyId, userId, limit]);
     return rows;
   },
+  // Quota helpers
+  async getTodayRequestCount(keyId) {
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) as count FROM api_logs WHERE key_id = ? AND DATE(timestamp) = CURDATE()`,
+      [keyId]
+    );
+    return rows[0]?.count || 0;
+  },
+
+  async getUserPlan(userId) {
+    const [rows] = await pool.query('SELECT plan FROM users WHERE id = ?', [userId]);
+    return rows[0]?.plan || 'free';
+  },
+
+  async setUserPlan(userId, plan) {
+    await pool.query('UPDATE users SET plan = ? WHERE id = ?', [plan, userId]);
+  },
+
   async getGlobalStats() {
     const [[users]] = await pool.query('SELECT COUNT(*) as count FROM users');
     const [[keys]] = await pool.query('SELECT COUNT(*) as count FROM api_keys');

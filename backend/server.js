@@ -74,7 +74,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, { customCss, 
 // API Routes
 app.use('/api', apiRoutes);
 
-// SPA Fallback
+// SPA Fallback — serve React app for all non-API routes
 app.use((req, res, next) => {
     if (req.path.startsWith('/api/') || req.path.startsWith('/api-docs')) return next();
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));

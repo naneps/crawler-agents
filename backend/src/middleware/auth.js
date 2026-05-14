@@ -35,6 +35,7 @@ const requireCredential = async (req, res, next) => {
 
         if (user) {
             req.user = user;
+            req.userPlan = user.plan || 'free';
             
             // Log analytics after response is sent
             res.on('finish', () => {

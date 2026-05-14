@@ -6,7 +6,16 @@ const newsController = require('../controllers/newsController');
 const sourceController = require('../controllers/sourceController');
 const apiKeyController = require('../controllers/apiKeyController');
 const adminController = require('../controllers/adminController');
+const publicController = require('../controllers/publicController');
 const { requireAuth, requireAdmin, requireCredential } = require('../middleware/auth');
+const quota = require('../middleware/quota');
+
+// ──────────────────────────────────────────
+// PUBLIC ROUTES (no auth required)
+// ──────────────────────────────────────────
+router.get('/public/sources', publicController.getSources);
+router.get('/public/sample', publicController.getSample);
+router.post('/public/register', publicController.register);
 
 // Auth Routes
 router.post('/auth/register', authController.register);
@@ -100,8 +109,8 @@ router.get('/news/:source/categories', requireCredential, newsController.getSour
  */
 router.get('/news/:source/detail', requireCredential, newsController.getArticleDetail);
 
-router.get('/news/:source', requireCredential, newsController.getNews);
-router.get('/news/:source/:category', requireCredential, newsController.getNews);
+router.get('/news/:source', requireCredential, quota, newsController.getNews);
+router.get('/news/:source/:category', requireCredential, quota, newsController.getNews);
 
 // Admin Platform Management
 router.get('/admin/stats', requireAdmin, adminController.getStats);
