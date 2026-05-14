@@ -12,7 +12,13 @@ exports.getStats = async (req, res) => {
 exports.getUsers = async (req, res) => {
     try {
         const users = await db.getAllUsers();
-        res.json({ success: true, users });
+        // Add today's usage for each user
+        const usersWithQuota = await Promise.all(users.map(async (u) => {
+            const usage = await db.getTodayUserRequestCount(u.id);
+            const planLimit = u.subscriptions?.[0]?.plan?.maxRequestsDay || 500;
+            return { ...u, usage, planLimit };
+        }));
+        res.json({ success: true, users: usersWithQuota });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

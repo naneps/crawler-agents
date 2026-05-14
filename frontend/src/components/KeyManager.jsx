@@ -12,6 +12,7 @@ import {
   Copy,
   CheckCircle2,
   AlertTriangle,
+  Zap,
   ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import { cn } from '@/lib/utils';
 
 export default function KeyManager() {
   const [keys, setKeys] = useState([]);
+  const [quota, setQuota] = useState(null);
   const [newKeyName, setNewKeyName] = useState('');
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
@@ -31,8 +33,24 @@ export default function KeyManager() {
   const [logsLoading, setLogsLoading] = useState(false);
 
   useEffect(() => {
-    fetchKeys();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [keyRes, quotaRes] = await Promise.all([
+        axios.get('/api/user/keys'),
+        axios.get('/api/user/quota')
+      ]);
+      setKeys(keyRes.data.keys || []);
+      setQuota(quotaRes.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchKeys = async () => {
     try {
@@ -40,8 +58,6 @@ export default function KeyManager() {
       setKeys(res.data.keys || []);
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -94,7 +110,27 @@ export default function KeyManager() {
     <div className="flex-1 overflow-hidden flex flex-col">
       <div className="p-8 md:p-12 max-w-[1200px] mx-auto w-full space-y-12">
         {/* Header Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-card border border-border rounded-2xl p-6 space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Daily Intelligence Quota</p>
+            <div className="space-y-3">
+              <div className="flex items-end justify-between">
+                <h4 className="text-3xl font-black tracking-tighter">
+                  {quota?.usage || 0}<span className="text-sm text-muted-foreground ml-1">/ {quota?.limit}</span>
+                </h4>
+                <Zap className="w-5 h-5 text-primary" />
+              </div>
+              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full rounded-full transition-all duration-1000",
+                    ((quota?.usage || 0) / (quota?.limit || 1)) > 0.9 ? "bg-destructive" : "bg-primary"
+                  )} 
+                  style={{ width: `${Math.min(100, ((quota?.usage || 0) / (quota?.limit || 1)) * 100)}%` }} 
+                />
+              </div>
+            </div>
+          </div>
           <div className="bg-card border border-border rounded-2xl p-6 space-y-2">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Nodes</p>
             <div className="flex items-end justify-between">

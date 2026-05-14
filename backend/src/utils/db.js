@@ -208,13 +208,13 @@ module.exports = {
   },
 
   // Quota helpers
-  async getTodayRequestCount(keyId) {
+  async getTodayUserRequestCount(userId) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     return await prisma.apiLog.count({
       where: {
-        keyId,
+        apiKey: { userId },
         timestamp: { gte: today }
       }
     });

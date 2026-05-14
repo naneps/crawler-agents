@@ -8,19 +8,19 @@ const db = require('../utils/db');
  */
 module.exports = async function quotaMiddleware(req, res, next) {
     try {
-        const keyId = req.apiKeyId;
-        if (!keyId) return next(); // session-based (dashboard user), no quota
+        const userId = req.user?.id;
+        if (!userId) return next(); // session-based or unknown
 
         const plan = req.userPlan || 'free';
         const limit = req.planLimit ?? 500;
 
         if (limit >= 999999) return next(); // Enterprise/Unlimited
 
-        const count = await db.getTodayRequestCount(keyId);
+        const count = await db.getTodayUserRequestCount(userId);
         if (count >= limit) {
             return res.status(429).json({
                 success: false,
-                message: `Daily quota exceeded. Your ${plan} plan allows ${limit} requests/day.`,
+                message: `Daily quota exceeded for your account. Your ${plan} plan allows ${limit} requests/day across all keys.`,
                 quota: { used: count, limit, plan },
             });
         }

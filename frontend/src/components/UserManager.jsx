@@ -142,10 +142,25 @@ export default function UserManager() {
                         </Badge>
                       </TableCell>
                       <TableCell className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                           <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md">
+                        <div className="flex flex-col gap-1.5">
+                           <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md w-fit">
                              <Zap className="w-2.5 h-2.5 mr-1" /> {currentPlan}
                            </Badge>
+                           <div className="flex flex-col gap-1 w-24">
+                              <div className="flex justify-between text-[7px] font-black uppercase tracking-tighter text-muted-foreground/80">
+                                 <span>{u.usage} / {u.planLimit}</span>
+                                 <span>{Math.round((u.usage / u.planLimit) * 100)}%</span>
+                              </div>
+                              <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                                 <div 
+                                   className={cn(
+                                     "h-full rounded-full transition-all duration-1000",
+                                     (u.usage / u.planLimit) > 0.9 ? "bg-destructive" : "bg-primary"
+                                   )} 
+                                   style={{ width: `${Math.min(100, (u.usage / u.planLimit) * 100)}%` }} 
+                                 />
+                              </div>
+                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="px-6 py-3">

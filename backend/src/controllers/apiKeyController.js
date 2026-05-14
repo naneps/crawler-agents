@@ -42,3 +42,24 @@ exports.getLogs = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.getQuota = async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const usage = await db.getTodayUserRequestCount(userId);
+        const planName = await db.getUserPlan(userId);
+        
+        // Get plan details
+        const plans = await db.getAllPlans();
+        const currentPlan = plans.find(p => p.name === planName);
+        
+        res.json({ 
+            success: true, 
+            usage, 
+            limit: currentPlan?.maxRequestsDay || 500,
+            plan: planName 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

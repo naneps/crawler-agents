@@ -40,6 +40,7 @@ router.post('/auth/logout', authController.logout);
 router.get('/auth/me', authController.me);
 
 // API Key Management (Multi-Key)
+router.get('/user/quota', requireAuth, apiKeyController.getQuota);
 router.get('/user/keys', requireAuth, apiKeyController.getKeys);
 router.post('/user/keys', requireAuth, apiKeyController.createKey);
 router.delete('/user/keys/:id', requireAuth, apiKeyController.deleteKey);
