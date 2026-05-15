@@ -1,17 +1,17 @@
-const createCrawler = require('./factory');
-const db = require('./utils/db');
+import createCrawler from './factory';
+import db from './utils/db';
 
-let crawlers = {};
-let sourcesConfig = {};
+let crawlers: any = {};
+let sourcesConfig: any = {};
 
 async function initCrawlers() {
   console.log('🔄 Loading crawlers from Database...');
   const sources = await db.getAllSources();
   
-  const newCrawlers = {};
-  const newConfig = {};
+  const newCrawlers: any = {};
+  const newConfig: any = {};
   
-  sources.forEach(source => {
+  sources.forEach((source: any) => {
     // Parse JSON fields if they are strings (MySQL JSON type might return object or string depending on driver config)
     const categories = typeof source.categories === 'string' ? JSON.parse(source.categories) : source.categories;
     const selectors = typeof source.selectors === 'string' ? JSON.parse(source.selectors) : source.selectors;
@@ -31,9 +31,14 @@ async function initCrawlers() {
   console.log(`✅ Loaded ${Object.keys(crawlers).length} crawlers.`);
 }
 
-module.exports = {
+const get = (id: string) => crawlers[id];
+const getAll = () => crawlers;
+const getConfig = () => sourcesConfig;
+
+export default {
   init: initCrawlers,
-  get: (id) => crawlers[id],
-  getAll: () => crawlers,
-  getConfig: () => sourcesConfig
+  get,
+  getAll,
+  getConfig
 };
+

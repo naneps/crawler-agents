@@ -1,4 +1,4 @@
-const xml2js = require('xml2js');
+import xml2js  from 'xml2js';
 
 const xmlParser = async (xml) => {
   try {
@@ -26,4 +26,4 @@ const xmlParser = async (xml) => {
   }
 };
 
-module.exports = xmlParser;
+export default xmlParser;

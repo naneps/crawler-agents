@@ -1,12 +1,37 @@
-require('dotenv/config');
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
+import 'dotenv/config';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import { sourcesConfig } from '../src/config/sources';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database with IDR prices...');
+
+  // 0. Seed Sources
+  console.log('🌱 Seeding sources...');
+  const sourceEntries = Object.entries(sourcesConfig);
+  for (const [id, src] of sourceEntries) {
+    const s = src as any;
+    await prisma.source.upsert({
+      where: { id },
+      update: {
+        name: s.name,
+        baseUrl: s.baseUrl,
+        categories: s.categories,
+        selectors: s.selectors
+      },
+      create: {
+        id,
+        name: s.name,
+        baseUrl: s.baseUrl,
+        categories: s.categories,
+        selectors: s.selectors
+      }
+    });
+  }
+  console.log(`✅ ${sourceEntries.length} sources seeded.`);
 
   // 1. Create Plans (Realistic Indonesian Market Prices in IDR)
   const plans = [
@@ -68,6 +93,7 @@ async function main() {
       role: 'admin'
     },
     create: {
+      id: '00000000-0000-0000-0000-000000000000', // Static dummy UUID for admin
       username: adminEmail,
       password: hashedPassword,
       apiKey: apiKey,
@@ -78,6 +104,10 @@ async function main() {
   // 3. Link Admin to Enterprise Plan
   const entPlan = await prisma.plan.findUnique({ where: { name: 'enterprise' } });
   
+  if (!entPlan) {
+    throw new Error('❌ Enterprise plan not found. Seed plans first.');
+  }
+
   const existingSub = await prisma.subscription.findFirst({
     where: { userId: admin.id }
   });

@@ -1,6 +1,7 @@
-const feedid = require('../index');
-const NodeCache = require('node-cache');
-const db = require('../utils/db');
+import { Request, Response } from 'express';
+import feedid from '../index';
+import NodeCache from 'node-cache';
+import db from '../utils/db';
 
 const publicCache = new NodeCache({ stdTTL: 120 }); // 2-min cache
 
@@ -8,13 +9,13 @@ const publicCache = new NodeCache({ stdTTL: 120 }); // 2-min cache
  * GET /api/public/sources
  * Returns all configured sources with their categories (no auth)
  */
-exports.getSources = async (req, res) => {
+export const getSources = async (req: Request, res: Response) => {
     const cached = publicCache.get('public-sources');
     if (cached) return res.json(cached);
 
     try {
         const config = feedid.getConfig();
-        const sources = Object.entries(config).map(([id, src]) => ({
+        const sources = Object.entries(config).map(([id, src]: any) => ({
             id,
             name: src.name,
             baseUrl: src.baseUrl,
@@ -25,7 +26,7 @@ exports.getSources = async (req, res) => {
         const result = { success: true, total: sources.length, sources };
         publicCache.set('public-sources', result);
         res.json(result);
-    } catch (error) {
+    } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -34,7 +35,7 @@ exports.getSources = async (req, res) => {
  * GET /api/public/sample
  * Returns sample articles from a few sources (no auth)
  */
-exports.getSample = async (req, res) => {
+export const getSample = async (req: Request, res: Response) => {
     const cached = publicCache.get('public-sample');
     if (cached) return res.json(cached);
 
@@ -49,7 +50,7 @@ exports.getSample = async (req, res) => {
 
         // Pick up to 3 sources to sample from
         const pickedIds = sourceIds.slice(0, 3);
-        const articles = [];
+        const articles: any[] = [];
 
         for (const id of pickedIds) {
             try {
@@ -60,7 +61,7 @@ exports.getSample = async (req, res) => {
                 if (!cat || !crawler[cat]) continue;
                 const result = await crawler[cat]({ fetchDetail: false });
                 const posts = result?.data?.posts || result?.posts || [];
-                const top = posts.slice(0, 2).map(p => ({
+                const top = posts.slice(0, 2).map((p: any) => ({
                     ...p,
                     sourceName: config[id].name,
                     sourceId: id,
@@ -74,7 +75,7 @@ exports.getSample = async (req, res) => {
         const result = { success: true, total: articles.length, articles };
         publicCache.set('public-sample', result);
         res.json(result);
-    } catch (error) {
+    } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -83,31 +84,7 @@ exports.getSample = async (req, res) => {
  * POST /api/public/register
  * Open self-serve registration (no auth)
  */
-exports.register = async (req, res) => {
-    const bcrypt = require('bcryptjs');
-    const crypto = require('crypto');
-    const { username, password, email } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'Username and password are required.' });
-    }
-    if (username.length < 3) {
-        return res.status(400).json({ success: false, message: 'Username must be at least 3 characters.' });
-    }
-    if (password.length < 6) {
-        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
-    }
-
-    try {
-        const existing = await db.getUserByUsername(username);
-        if (existing) return res.status(409).json({ success: false, message: 'Username already taken.' });
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const apiKey = 'cg_' + crypto.randomBytes(20).toString('hex');
-
-        await db.createUser(username, hashedPassword, apiKey, 'user');
-        res.json({ success: true, message: 'Account created! Redirecting to dashboard...' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+export const register = async (req: Request, res: Response) => {
+    return res.status(400).json({ success: false, message: 'Registration is now managed by Supabase. Please use the frontend.' });
 };
+

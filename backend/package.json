@@ -3,12 +3,20 @@
   "version": "2.0.1",
   "description": "Parser RSS Situs Berita Indonesia",
   "main": "./src/index.js",
-  "scripts": {},
+  "scripts": {
+    "start": "ts-node server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "migrate": "npx prisma migrate dev",
+    "generate": "npx prisma generate",
+    "seed": "ts-node prisma/seed.ts",
+    "studio": "npx prisma studio"
+  },
   "author": "Renova Muhamad Reza",
   "license": "MIT",
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
     "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.105.4",
     "axios": "^1.16.0",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.9.0",
@@ -26,8 +34,16 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.12",
-    "prisma": "^6.19.3"
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.8.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "nodemon": "^3.1.14",
+    "prisma": "^6.19.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.3"
   },
   "keywords": [
     "rss",

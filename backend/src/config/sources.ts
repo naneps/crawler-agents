@@ -1,4 +1,4 @@
-module.exports = {
+export const sourcesConfig: any = {
   // ─── EXISTING SOURCES ────────────────────────────────────────────────────────
 
   antara: {

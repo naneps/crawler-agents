@@ -22,13 +22,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/lib/supabase';
 
 import ArticleCard from './components/ArticleCard';
 import ArticleDetail from './components/ArticleDetail';
 import Sidebar from './components/Sidebar';
 import SourceEditorForm from './components/SourceForm';
 import SourcesInventory from './components/SourcesInventory';
-import Auth from './components/Auth';
 import ApiReference from './components/ApiReference';
 import KeyManager from './components/KeyManager';
 import PlatformDashboard from './components/PlatformDashboard';
@@ -83,10 +83,10 @@ export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('crawlgen-theme') || 'dark');
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [session, setSession] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
-  const params = useParams();
 
   const activeTab = useMemo(() => {
     if (location.pathname.startsWith('/feed')) return 'feed';
@@ -133,9 +133,64 @@ export default function App() {
     localStorage.setItem('crawlgen-theme', theme);
   }, [theme]);
 
+  // Set up Axios Interceptor to automatically add JWT token
   useEffect(() => {
-    checkAuth();
+    const reqInterceptor = axios.interceptors.request.use(async (config) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        config.headers.Authorization = `Bearer ${session.access_token}`;
+      }
+      return config;
+    });
+
+    return () => {
+      axios.interceptors.request.eject(reqInterceptor);
+    };
   }, []);
+
+  useEffect(() => {
+    // Initial Auth Check
+    const fetchAuth = async () => {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      setSession(s);
+      handleAuthChange(s);
+      setLoading(false);
+    };
+
+    fetchAuth();
+
+    // Listen to Auth Changes (Login/Logout/Token Refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      handleAuthChange(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleAuthChange = async (session) => {
+    if (session) {
+      try {
+        // Sync with backend to get role and API keys
+        const res = await axios.get('/api/auth/me');
+        if (res.data.loggedIn) {
+          setUser({
+            username: session.user.user_metadata.full_name || session.user.email,
+            role: res.data.role || 'user',
+            apiKey: res.data.apiKey || res.data.api_key || '' 
+          });
+        } else {
+          setUser(null);
+        }
+      } catch (e) {
+        console.error("Backend auth sync failed:", e);
+        setUser(null);
+        setSession(null); 
+      }
+    } else {
+      setUser(null);
+    }
+  };
 
   useEffect(() => {
     if (user) fetchSources();
@@ -148,27 +203,6 @@ export default function App() {
   useEffect(() => {
     setSelectedArticle(null);
   }, [location.pathname]);
-
-  const checkAuth = async (redirectTo) => {
-    try {
-      const res = await axios.get('/api/auth/me');
-      console.log('🔐 Auth Check:', res.data);
-      if (res.data.loggedIn) {
-        setUser({
-          username: res.data.username,
-          role: res.data.role || 'user',
-          apiKey: res.data.apiKey || res.data.api_key || '' 
-        });
-        if (redirectTo) navigate(redirectTo);
-      } else {
-        setUser(null);
-      }
-    } catch (e) {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchSources = async () => {
     try {
@@ -191,7 +225,6 @@ export default function App() {
         ? `/api/news/${currentSource}/${currentCategory}`
         : `/api/news/${currentSource}`;
       const res = await axios.get(url);
-      // Handle potential nested data structure from backend
       const data = res.data.data?.posts || res.data.posts || (Array.isArray(res.data) ? res.data : []);
       setArticles(data);
     } catch (e) {
@@ -216,7 +249,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await axios.post('/api/auth/logout');
+    await supabase.auth.signOut();
     setUser(null);
     navigate('/');
   };
@@ -252,29 +285,28 @@ export default function App() {
     </div>
   );
 
-  // Unauthenticated: show Landing at /, Auth at /login and /register
-  if (!user) return (
+  // Unauthenticated: show Landing at root.
+  if (!user && !session) return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/login" element={
-        <Auth
-          onLogin={checkAuth}
-          theme={theme}
-          toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-          defaultView="login"
-        />
-      } />
-      <Route path="/register" element={
-        <Auth
-          onLogin={checkAuth}
-          theme={theme}
-          toggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-          defaultView="register"
-        />
-      } />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
+
+  // If we have a session but user is still null, show loading while syncing with backend
+  if (session && !user) return (
+    <div className="h-screen w-full flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4">
+        <Activity className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Syncing Profile...</p>
+      </div>
+    </div>
+  );
+
+  // Prevent logged in users from seeing landing page by accident when they navigate to /
+  if (location.pathname === '/') {
+    return <Navigate to="/feed" replace />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -292,7 +324,6 @@ export default function App() {
 
       <main className="flex-1 flex flex-col min-w-0 bg-background text-foreground transition-all duration-500 overflow-hidden relative">
         <header className="h-14 border-b border-border bg-background/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-40">
-          {/* Left: Source Info */}
           <div className="flex items-center gap-3 shrink-0 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-lg shadow-primary/5">
               <Activity className="w-4 h-4" />
@@ -316,7 +347,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: Controls (Category & Search) */}
           <div className="flex items-center gap-3">
             {activeTab === 'feed' && sources[currentSource]?.categories && (
               <CategorySelector
@@ -400,3 +430,4 @@ export default function App() {
     </div>
   );
 }
+

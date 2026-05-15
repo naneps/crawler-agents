@@ -3,8 +3,8 @@
   "version": "2.5.0",
   "description": "Premium News Intelligence & Aggregator Platform",
   "scripts": {
-    "start": "cd backend && node server.js",
-    "dev:backend": "cd backend && nodemon server.js",
+    "start": "cd backend && ts-node server.ts",
+    "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"

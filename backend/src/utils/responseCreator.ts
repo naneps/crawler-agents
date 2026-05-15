@@ -7,4 +7,4 @@ const responseCreator = (dataOrMessage) => {
   };
 };
 
-module.exports = responseCreator;
+export default responseCreator;

@@ -1,7 +1,7 @@
 const { default: axios } = require('axios');
-const { JSDOM } = require('jsdom');
-const { Readability } = require('@mozilla/readability');
-const cheerio = require('cheerio');
+import { Readability } from '@mozilla/readability';
+import cheerio from 'cheerio';
+import { JSDOM } from 'jsdom';
 
 /**
  * Fetches article detail from a given URL.
@@ -114,4 +114,4 @@ const fetchArticleDetail = async (url, selectors = {}) => {
   }
 };
 
-module.exports = fetchArticleDetail;
+export default fetchArticleDetail;

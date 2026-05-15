@@ -1,8 +1,8 @@
-const db = require('./src/utils/db');
-const prisma = require('./src/utils/prisma');
-const sourcesConfig = require('./src/config/sources');
-const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
+import db  from './src/utils/db';
+import prisma  from './src/utils/prisma';
+import sourcesConfig  from './src/config/sources';
+import bcrypt  from 'bcryptjs';
+import crypto  from 'crypto';
 
 async function seed() {
   console.log('🚀 Starting Prisma Data Migration...');

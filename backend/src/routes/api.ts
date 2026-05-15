@@ -1,14 +1,14 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const authController = require('../controllers/authController');
-const newsController = require('../controllers/newsController');
-const sourceController = require('../controllers/sourceController');
-const apiKeyController = require('../controllers/apiKeyController');
-const adminController = require('../controllers/adminController');
-const publicController = require('../controllers/publicController');
-const { requireAuth, requireAdmin, requireCredential } = require('../middleware/auth');
-const quota = require('../middleware/quota');
+import * as authController from '../controllers/authController';
+import * as newsController from '../controllers/newsController';
+import * as sourceController from '../controllers/sourceController';
+import * as apiKeyController from '../controllers/apiKeyController';
+import * as adminController from '../controllers/adminController';
+import * as publicController from '../controllers/publicController';
+import { requireAuth, requireAdmin, requireCredential } from '../middleware/auth';
+import quota from '../middleware/quota';
 
 // ──────────────────────────────────────────
 // PUBLIC ROUTES (no auth required)
@@ -37,7 +37,7 @@ router.post('/auth/register', authController.register);
  */
 router.post('/auth/login', authController.login);
 router.post('/auth/logout', authController.logout);
-router.get('/auth/me', authController.me);
+router.get('/auth/me', requireAuth, authController.me);
 
 // API Key Management (Multi-Key)
 router.get('/user/quota', requireAuth, apiKeyController.getQuota);
@@ -128,4 +128,5 @@ router.get('/sources', requireAdmin, sourceController.getAllSources);
 router.post('/sources', requireAdmin, sourceController.upsertSource);
 router.delete('/sources/:id', requireAdmin, sourceController.deleteSource);
 
-module.exports = router;
+export default router;
+

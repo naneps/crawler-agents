@@ -1,4 +1,4 @@
-const db = require('../utils/db');
+import db  from '../utils/db';
 
 
 
@@ -6,7 +6,7 @@ const db = require('../utils/db');
  * Middleware: Check daily API quota per key.
  * Must be used after requireCredential (which sets req.apiKeyId and req.userPlan).
  */
-module.exports = async function quotaMiddleware(req, res, next) {
+export default async function quotaMiddleware(req: any, res: any, next: any) {
     try {
         const userId = req.user?.id;
         if (!userId) return next(); // session-based or unknown

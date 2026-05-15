@@ -1,18 +1,17 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-const session = require('express-session');
-const feedid = require('./src/index');
-const db = require('./src/utils/db');
-const apiRoutes = require('./src/routes/api');
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import path from 'path';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+import feedid from './src/index';
+import db from './src/utils/db';
+import apiRoutes from './src/routes/api';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Basic Middlewares
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';");
     res.removeHeader('X-Content-Security-Policy');
     res.removeHeader('X-WebKit-CSP');
@@ -23,15 +22,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
-// Session Configuration
-const FileStore = require('session-file-store')(session);
-app.use(session({
-    store: new FileStore({ path: './sessions' }),
-    secret: 'crawlgen-intelligence-ultra-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
-}));
+
 
 // Swagger Configuration
 const swaggerOptions = {
@@ -75,7 +66,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, { customCss, 
 app.use('/api', apiRoutes);
 
 // SPA Fallback — serve React app for all non-API routes
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith('/api/') || req.path.startsWith('/api-docs')) return next();
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });

@@ -1,7 +1,7 @@
-const xmlParser = require('./xmlParser');
-const { cleanHtml, isObjIncludeKey, dateToISO } = require('./utility');
-const responseCreator = require('./responseCreator');
-const fetchArticleDetail = require('./detailCrawler');
+import xmlParser  from './xmlParser';
+import { cleanHtml, isObjIncludeKey, dateToISO }  from './utility';
+import responseCreator  from './responseCreator';
+import fetchArticleDetail  from './detailCrawler';
 
 const parseRssItems = async ({ items, keys = {}, fetchDetail = false, detailSelector = {} }) => {
   const defaultKeys = {
@@ -73,4 +73,4 @@ const parseRss = async ({ xml, postKeys = {}, additionalInfo = {}, fetchDetail =
   );
 };
 
-module.exports = { parseRssInfo, parseRssItems, parseRss };
+export { parseRssInfo, parseRssItems, parseRss };

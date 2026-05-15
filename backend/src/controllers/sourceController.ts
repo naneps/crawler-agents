@@ -1,32 +1,34 @@
-const db = require('../utils/db');
-const feedid = require('../index');
+import { Request, Response } from 'express';
+import db from '../utils/db';
+import feedid from '../index';
 
-exports.getAllSources = async (req, res) => {
+export const getAllSources = async (req: Request, res: Response) => {
     try {
         const sources = await db.getAllSources();
         res.json(sources);
-    } catch (error) {
+    } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-exports.upsertSource = async (req, res) => {
+export const upsertSource = async (req: Request, res: Response) => {
     const { id, name, baseUrl, categories, selectors } = req.body;
     try {
         await db.upsertSource(id, name, baseUrl, categories, selectors);
         await feedid.init();
         res.json({ success: true, message: 'Source saved' });
-    } catch (error) {
+    } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-exports.deleteSource = async (req, res) => {
+export const deleteSource = async (req: Request, res: Response) => {
     try {
         await db.deleteSource(req.params.id);
         await feedid.init();
         res.json({ success: true, message: 'Source deleted' });
-    } catch (error) {
+    } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+

@@ -1,5 +1,5 @@
-const db = require('./src/utils/db');
-const bcrypt = require('bcryptjs');
+import db  from './src/utils/db';
+import bcrypt  from 'bcryptjs';
 
 async function createAdmin() {
     try {

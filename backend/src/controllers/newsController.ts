@@ -1,13 +1,15 @@
-const feedid = require('../index');
-const NodeCache = require('node-cache');
-const fetchArticleDetail = require('../utils/detailCrawler');
+import { Request, Response } from 'express';
+import feedid from '../index';
+import NodeCache from 'node-cache';
+import fetchArticleDetail from '../utils/detailCrawler';
+
 const newsCache = new NodeCache({ stdTTL: 300 });
 
-exports.getConfig = (req, res) => {
+export const getConfig = (req: Request, res: Response) => {
     res.json(feedid.getConfig());
 };
 
-exports.getNews = async (req, res) => {
+export const getNews = async (req: Request, res: Response) => {
     const { source, category } = req.params;
     const { fetchDetail } = req.query;
     const cacheKey = `${source}-${category}-${fetchDetail}`;
@@ -28,12 +30,12 @@ exports.getNews = async (req, res) => {
         const result = await fetchMethod({ fetchDetail: fetchDetail === 'true' });
         newsCache.set(cacheKey, result);
         res.json(result);
-    } catch (error) {
+    } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-exports.getSourceConfig = (req, res) => {
+export const getSourceConfig = (req: Request, res: Response) => {
     const { source } = req.params;
     const config = feedid.getConfig();
     const sourceConfig = config[source];
@@ -51,9 +53,9 @@ exports.getSourceConfig = (req, res) => {
     });
 };
 
-exports.getArticleDetail = async (req, res) => {
+export const getArticleDetail = async (req: Request, res: Response) => {
     const { source } = req.params;
-    const { url } = req.query;
+    const { url } = req.query as { url: string };
 
     if (!url) return res.status(400).json({ success: false, message: 'URL is required' });
 
@@ -68,7 +70,8 @@ exports.getArticleDetail = async (req, res) => {
             success: true,
             data: details
         });
-    } catch (error) {
+    } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+

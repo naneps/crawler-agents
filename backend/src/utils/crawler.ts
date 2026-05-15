@@ -1,5 +1,5 @@
 const { default: axios } = require('axios');
-const responseCreator = require('./responseCreator');
+import responseCreator  from './responseCreator';
 
 const crawler = async (rssUrl, cb, options) => {
   try {
@@ -15,4 +15,4 @@ const crawler = async (rssUrl, cb, options) => {
   }
 };
 
-module.exports = crawler;
+export default crawler;

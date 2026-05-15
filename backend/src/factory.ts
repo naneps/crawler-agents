@@ -1,5 +1,5 @@
-const crawler = require('./utils/crawler');
-const { parseRss } = require('./utils/parseRssInfo');
+import crawler  from './utils/crawler';
+import { parseRss }  from './utils/parseRssInfo';
 
 /**
  * Creates a crawler object based on the site configuration.
@@ -29,4 +29,4 @@ const createCrawler = (config) => {
   return methods;
 };
 
-module.exports = createCrawler;
+export default createCrawler;
