@@ -98,6 +98,17 @@ export const updateApiKey = async (userId: string, newApiKey: string) => {
   });
 };
 
+export const promoteUserToAdmin = async (userId: string) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { role: 'admin' }
+  });
+};
+
+export const updateUserId = async (oldId: string, newId: string) => {
+  return await prisma.$executeRaw`UPDATE users SET id = ${newId} WHERE id = ${oldId}`;
+};
+
 // Multi-API Key Operations
 export const getUserApiKeys = async (userId: string) => {
   return await prisma.apiKey.findMany({
@@ -360,6 +371,8 @@ export default {
   getAllPlans,
   upsertPlan,
   deletePlan,
-  getAllSubscriptions
+  getAllSubscriptions,
+  promoteUserToAdmin,
+  updateUserId
 };
 

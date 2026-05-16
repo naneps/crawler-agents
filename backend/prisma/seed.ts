@@ -1,7 +1,5 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import { sourcesConfig } from '../src/config/sources';
 
 const prisma = new PrismaClient();
@@ -81,56 +79,7 @@ async function main() {
   }
   console.log('✅ Plans seeded with IDR pricing.');
 
-  // 2. Create Default Admin
-  const adminEmail = 'admin@crawlgen.ai';
-  const hashedPassword = await bcrypt.hash('password', 10);
-  const apiKey = crypto.randomBytes(24).toString('hex');
-
-  const admin = await prisma.user.upsert({
-    where: { username: adminEmail },
-    update: {
-      password: hashedPassword,
-      role: 'admin'
-    },
-    create: {
-      id: '00000000-0000-0000-0000-000000000000', // Static dummy UUID for admin
-      username: adminEmail,
-      password: hashedPassword,
-      apiKey: apiKey,
-      role: 'admin'
-    }
-  });
-
-  // 3. Link Admin to Enterprise Plan
-  const entPlan = await prisma.plan.findUnique({ where: { name: 'enterprise' } });
-  
-  if (!entPlan) {
-    throw new Error('❌ Enterprise plan not found. Seed plans first.');
-  }
-
-  const existingSub = await prisma.subscription.findFirst({
-    where: { userId: admin.id }
-  });
-
-  if (existingSub) {
-    await prisma.subscription.update({
-      where: { id: existingSub.id },
-      data: {
-        planId: entPlan.id,
-        status: 'active'
-      }
-    });
-  } else {
-    await prisma.subscription.create({
-      data: {
-        userId: admin.id,
-        planId: entPlan.id,
-        status: 'active'
-      }
-    });
-  }
-
-  console.log('✅ Admin user and enterprise subscription seeded.');
+  console.log('✅ Plans seeded with IDR pricing.');
 }
 
 main()

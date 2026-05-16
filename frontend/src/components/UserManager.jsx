@@ -26,11 +26,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function UserManager() {
-  const [users, setUsers] = useState([]);
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function UserManager({ cache, setCache }) {
+  const [users, setUsers] = useState(cache.users || []);
+  const [plans, setPlans] = useState(cache.plans || []);
+  const [loading, setLoading] = useState(cache.users.length === 0);
   const [search, setSearch] = useState('');
   const [updatingUserId, setUpdatingUserId] = useState(null);
 
@@ -39,7 +40,7 @@ export default function UserManager() {
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
+    if (users.length === 0) setLoading(true);
     try {
       const [userRes, planRes] = await Promise.all([
         axios.get('/api/admin/users'),
@@ -47,6 +48,11 @@ export default function UserManager() {
       ]);
       setUsers(userRes.data.users);
       setPlans(planRes.data.plans);
+      setCache(prev => ({ 
+        ...prev, 
+        users: userRes.data.users, 
+        plans: planRes.data.plans 
+      }));
     } catch (e) {
       console.error(e);
     } finally {
@@ -70,9 +76,22 @@ export default function UserManager() {
     u.username.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return (
-    <div className="flex-1 flex items-center justify-center">
-      <Activity className="w-10 h-10 text-primary animate-spin opacity-20" />
+  if (loading && users.length === 0) return (
+    <div className="p-6 md:p-8 space-y-8">
+      <div className="flex justify-between items-center">
+        <div className="space-y-3">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+        <Skeleton className="h-11 w-72 rounded-xl" />
+      </div>
+      <div className="rounded-[2rem] border border-border/50 p-6 space-y-4">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="flex gap-4 items-center">
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 

@@ -84,6 +84,13 @@ export default function App() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [session, setSession] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    stats: null,
+    users: [],
+    plans: [],
+    keys: [],
+    quota: null
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -184,6 +191,9 @@ export default function App() {
         }
       } catch (e) {
         console.error("Backend auth sync failed:", e);
+        if (e.response && e.response.data) {
+          console.error("Detailed Backend Error:", e.response.data);
+        }
         setUser(null);
         setSession(null); 
       }
@@ -285,16 +295,8 @@ export default function App() {
     </div>
   );
 
-  // Unauthenticated: show Landing at root.
-  if (!user && !session) return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-
   // If we have a session but user is still null, show loading while syncing with backend
-  if (session && !user) return (
+  if (session && !user && location.pathname !== '/') return (
     <div className="h-screen w-full flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-4">
         <Activity className="w-10 h-10 text-primary animate-spin" />
@@ -303,9 +305,19 @@ export default function App() {
     </div>
   );
 
-  // Prevent logged in users from seeing landing page by accident when they navigate to /
+  // Landing Page Route - No Sidebar/Header
   if (location.pathname === '/') {
-    return <Navigate to="/feed" replace />;
+    return (
+      <Routes>
+        <Route path="/" element={<Landing user={user} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
+  // Protected Routes - If not logged in and not at root, go to root
+  if (!user && !session) {
+    return <Navigate to="/" replace />;
   }
 
   return (
@@ -406,9 +418,9 @@ export default function App() {
                 </ScrollArea>
               )
             } />
-            <Route path="/admin/dashboard" element={<PlatformDashboard />} />
-            <Route path="/admin/plans" element={<PlanManager />} />
-            <Route path="/admin/users" element={<UserManager />} />
+            <Route path="/admin/dashboard" element={<PlatformDashboard cache={dashboardData} setCache={setDashboardData} />} />
+            <Route path="/admin/plans" element={<PlanManager cache={dashboardData} setCache={setDashboardData} />} />
+            <Route path="/admin/users" element={<UserManager cache={dashboardData} setCache={setDashboardData} />} />
             <Route path="/sources" element={
               <SourcesInventory 
                 sourcesList={sourcesList} 
@@ -420,7 +432,7 @@ export default function App() {
             <Route path="/sources/new" element={<SourceEditorForm onSave={saveSource} sourcesList={sourcesList} />} />
             <Route path="/sources/edit/:id" element={<SourceEditorForm onSave={saveSource} sourcesList={sourcesList} />} />
             <Route path="/docs" element={<ApiReference />} />
-            <Route path="/keys" element={<KeyManager />} />
+            <Route path="/keys" element={<KeyManager cache={dashboardData} setCache={setDashboardData} />} />
             <Route path="*" element={<Navigate to="/feed" replace />} />
           </Routes>
         </div>

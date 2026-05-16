@@ -21,12 +21,13 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function KeyManager() {
-  const [keys, setKeys] = useState([]);
-  const [quota, setQuota] = useState(null);
+export default function KeyManager({ cache, setCache }) {
+  const [keys, setKeys] = useState(cache.keys || []);
+  const [quota, setQuota] = useState(cache.quota);
   const [newKeyName, setNewKeyName] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(cache.keys.length === 0);
   const [copiedId, setCopiedId] = useState(null);
   const [selectedKey, setSelectedKey] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -37,14 +38,17 @@ export default function KeyManager() {
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
+    if (keys.length === 0) setLoading(true);
     try {
       const [keyRes, quotaRes] = await Promise.all([
         axios.get('/api/user/keys'),
         axios.get('/api/user/quota')
       ]);
-      setKeys(keyRes.data.keys || []);
-      setQuota(quotaRes.data);
+      const newKeys = keyRes.data.keys || [];
+      const newQuota = quotaRes.data;
+      setKeys(newKeys);
+      setQuota(newQuota);
+      setCache(prev => ({ ...prev, keys: newKeys, quota: newQuota }));
     } catch (e) {
       console.error(e);
     } finally {
@@ -100,9 +104,23 @@ export default function KeyManager() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  if (loading) return (
-    <div className="flex-1 flex items-center justify-center">
-      <Activity className="w-8 h-8 text-primary animate-spin" />
+  if (loading && keys.length === 0) return (
+    <div className="p-8 md:p-12 max-w-[1200px] mx-auto w-full space-y-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map(i => (
+          <Skeleton key={i} className="h-32 rounded-2xl" />
+        ))}
+      </div>
+      <Skeleton className="h-24 w-full rounded-2xl" />
+      <div className="space-y-4">
+        <div className="flex justify-between items-center px-2">
+           <Skeleton className="h-4 w-32" />
+           <Skeleton className="h-4 w-24" />
+        </div>
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-32 rounded-2xl" />
+        ))}
+      </div>
     </div>
   );
 

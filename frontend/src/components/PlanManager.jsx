@@ -9,17 +9,20 @@ import {
   Layers,
   X,
   Save,
-  Activity
+  Activity,
+  Shield
 } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from './ui/input';
-import { Badge } from './ui/badge';
-import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-export default function PlanManager() {
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function PlanManager({ cache, setCache }) {
+  const [plans, setPlans] = useState(cache.plans || []);
+  const [loading, setLoading] = useState(cache.plans.length === 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   const [formData, setFormData] = useState({
@@ -35,10 +38,11 @@ export default function PlanManager() {
   }, []);
 
   const fetchPlans = async () => {
-    setLoading(true);
+    if (plans.length === 0) setLoading(true);
     try {
       const res = await axios.get('/api/admin/plans');
       setPlans(res.data.plans);
+      setCache(prev => ({ ...prev, plans: res.data.plans }));
     } catch (e) {
       console.error(e);
     } finally {
@@ -99,9 +103,23 @@ export default function PlanManager() {
     }).format(price);
   };
 
-  if (loading) return (
-    <div className="flex-1 flex items-center justify-center">
-      <Activity className="w-8 h-8 text-primary animate-spin opacity-20" />
+  if (loading && plans.length === 0) return (
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-9 h-9 rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-24 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <Skeleton key={i} className="h-56 rounded-2xl" />
+        ))}
+      </div>
     </div>
   );
 

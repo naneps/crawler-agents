@@ -14,24 +14,28 @@ import {
   Shield,
   Layers
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 
-export default function PlatformDashboard() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function PlatformDashboard({ cache, setCache }) {
+  const [stats, setStats] = useState(cache.stats);
+  const [loading, setLoading] = useState(!cache.stats);
 
   useEffect(() => {
     fetchStats();
   }, []);
 
   const fetchStats = async () => {
-    setLoading(true);
+    // Only show loading shimmer if we don't have cached data
+    if (!stats) setLoading(true);
     try {
       const res = await axios.get('/api/admin/stats');
-      setStats(res.data.stats);
+      const newStats = res.data.stats;
+      setStats(newStats);
+      setCache(prev => ({ ...prev, stats: newStats }));
     } catch (e) {
       console.error(e);
     } finally {
@@ -39,11 +43,32 @@ export default function PlatformDashboard() {
     }
   };
 
-  if (loading) return (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="relative">
-        <RefreshCw className="w-12 h-12 text-primary animate-spin opacity-20" />
-        <Activity className="w-6 h-6 text-primary absolute inset-0 m-auto animate-pulse" />
+  if (loading && !stats) return (
+    <div className="p-6 md:p-10 max-w-[1400px] mx-auto space-y-10">
+      <div className="flex justify-between items-center">
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="flex gap-3">
+          <Skeleton className="h-11 w-32 rounded-xl" />
+          <Skeleton className="h-11 w-11 rounded-xl" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map(i => (
+          <Skeleton key={i} className="h-48 rounded-[2rem]" />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Skeleton className="lg:col-span-2 h-[400px] rounded-[2.5rem]" />
+        <div className="space-y-6">
+          <Skeleton className="h-[300px] rounded-[2.5rem]" />
+          <Skeleton className="h-[150px] rounded-[2.5rem]" />
+        </div>
       </div>
     </div>
   );

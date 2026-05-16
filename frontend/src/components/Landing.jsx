@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
   Activity, ArrowRight, CheckCircle, Zap, Globe, Code2,
-  ExternalLink, ChevronRight, Radio, Plus, Mail, BookOpen
+  ExternalLink, ChevronRight, Radio, Plus, Mail, BookOpen,
+  ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,9 +14,14 @@ import { supabase } from '@/lib/supabase';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Navbar() {
+function Navbar({ user }) {
+  const navigate = useNavigate();
   const scrollToAuth = () => {
-    document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' });
+    if (user) {
+      navigate('/feed');
+    } else {
+      document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -40,7 +47,7 @@ function Navbar() {
             Docs
           </a>
           <Button size="sm" className="text-xs h-8 gap-1.5" onClick={scrollToAuth}>
-            Sign In / Register <ArrowRight className="w-3 h-3" />
+            {user ? 'Go to Dashboard' : 'Sign In / Register'} <ArrowRight className="w-3 h-3" />
           </Button>
         </div>
       </div>
@@ -48,9 +55,14 @@ function Navbar() {
   );
 }
 
-function HeroSection({ sourceCount }) {
+function HeroSection({ sourceCount, user }) {
+  const navigate = useNavigate();
   const scrollToAuth = () => {
-    document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' });
+    if (user) {
+      navigate('/feed');
+    } else {
+      document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -84,7 +96,7 @@ function HeroSection({ sourceCount }) {
 
         <div className="flex flex-wrap gap-4 pt-4">
           <Button size="lg" className="gap-2 h-12 px-8 shadow-lg shadow-primary/20 text-sm font-bold" onClick={scrollToAuth}>
-            Get Free API Key <ArrowRight className="w-4 h-4" />
+            {user ? 'Go to Dashboard' : 'Get Free API Key'} <ArrowRight className="w-4 h-4" />
           </Button>
           <Button size="lg" variant="outline" className="gap-2 h-12 px-8 text-sm font-bold bg-background/50 backdrop-blur-sm" asChild>
             <a href="/api-docs" target="_blank" rel="noopener">
@@ -295,9 +307,27 @@ function PricingSection() {
   );
 }
 
-function AuthSection() {
+function AuthSection({ user }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const navigate = useNavigate();
+
+  if (user) {
+    return (
+      <section id="auth-section" className="py-24 px-6 max-w-6xl mx-auto border-t border-border/50 text-center">
+        <div className="max-w-2xl mx-auto space-y-6">
+           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8">
+              <ShieldCheck className="w-10 h-10 text-primary" />
+           </div>
+           <h2 className="text-3xl font-black tracking-tight">You are already Authenticated</h2>
+           <p className="text-muted-foreground">Welcome back, <span className="text-foreground font-bold">{user.username}</span>. Your neural link is active and secure.</p>
+           <Button size="lg" className="h-14 px-10 gap-2 font-bold" onClick={() => navigate('/feed')}>
+              Enter Dashboard <ArrowRight className="w-4 h-4" />
+           </Button>
+        </div>
+      </section>
+    );
+  }
 
   const handleOAuthLogin = async (provider) => {
     setLoading(true);
@@ -438,7 +468,7 @@ function Footer() {
 }
 
 // ─── Main Landing Page ────────────────────────────────────────────────────────
-export default function Landing() {
+export default function Landing({ user }) {
   const [sources, setSources] = useState([]);
   const [sourcesLoading, setSourcesLoading] = useState(true);
 
@@ -454,12 +484,12 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
-      <Navbar />
-      <HeroSection sourceCount={sourcesLoading ? '...' : sources.length} />
+      <Navbar user={user} />
+      <HeroSection sourceCount={sourcesLoading ? '...' : sources.length} user={user} />
       <StatsBar sourceCount={sources.length} loading={sourcesLoading} />
       <SourcesSection sources={sources} loading={sourcesLoading} />
       <PricingSection />
-      <AuthSection />
+      <AuthSection user={user} />
       <Footer />
     </div>
   );

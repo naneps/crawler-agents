@@ -16,32 +16,71 @@ declare global {
 
 // Check if user is logged in via Supabase JWT
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ success: false, message: 'Authentication required: Missing Bearer Token' });
+    console.log(`[Auth Debug] Incoming request: ${req.method} ${req.url}`);
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ success: false, message: 'Authentication required: Missing Bearer Token' });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+
+        if (error || !user) {
+            return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+        }
+
+        // Auto-sync user to Prisma DB if they don't exist
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const isOwner = !!(user.email && adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase());
+
+        let localUser = await db.getUserById(user.id);
+        
+        if (!localUser && user.email) {
+           // Fallback: check if they exist by email (username) but with a different ID
+           const ghostUser = await db.getUserByUsername(user.email);
+           if (ghostUser) {
+              try {
+                console.log(`[Auth] Syncing ID for user ${user.email}: ${ghostUser.id} -> ${user.id}`);
+                await db.updateUserId(ghostUser.id, user.id);
+                localUser = await db.getUserById(user.id);
+              } catch (syncErr) {
+                console.error('[Auth] ID sync failed:', syncErr);
+                // Fallback: just use the ghostUser but it might cause issues later
+                localUser = ghostUser;
+              }
+           }
+        }
+        
+        if (!localUser) {
+           // Extract email or fallback
+           const email = user.email || 'unknown@user.com';
+           const role = isOwner ? 'admin' : 'user';
+           localUser = await db.createUser(user.id, email, null, null, role);
+           console.log(`[Auth] New user synced: ${email} (Role: ${role})`);
+        } else if (isOwner && localUser.role !== 'admin') {
+           // Auto-promote if they are the designated admin
+           localUser = await db.promoteUserToAdmin(user.id);
+           console.log(`[Auth] User promoted to Admin: ${user.email}`);
+        }
+
+        // Attach user to request with role from DB
+        req.user = {
+            ...user,
+            role: localUser?.role || 'user'
+        };
+        
+        return next();
+    } catch (err: any) {
+        console.error('[Auth Middleware Error]:', err);
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Internal Server Error during Authentication Sync',
+            error: err.message,
+            stack: err.stack,
+            envAdmin: process.env.ADMIN_EMAIL
+        });
     }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
-        return res.status(401).json({ success: false, message: 'Invalid or expired token' });
-    }
-
-    // Attach Supabase user to request
-    req.user = user;
-    
-    // Auto-sync user to Prisma DB if they don't exist
-    // This is optional but recommended if you want to store roles/api keys locally
-    let localUser = await db.getUserById(user.id);
-    if (!localUser) {
-       // Extract email or fallback
-       const email = user.email || 'unknown@user.com';
-       localUser = await db.createUser(user.id, email, null, null, 'user');
-    }
-
-    req.user.role = localUser?.role || 'user';
-    return next();
 };
 
 // Check if user is platform admin
