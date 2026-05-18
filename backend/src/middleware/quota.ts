@@ -30,7 +30,7 @@ export default async function quotaMiddleware(req: any, res: any, next: any) {
         res.setHeader('X-RateLimit-Remaining', Math.max(0, limit - count - 1));
 
         next();
-    } catch (error) {
+    } catch (error: any) {
         // Don't block request if quota check fails
         console.error('[quota] Failed to check quota:', error.message);
         next();

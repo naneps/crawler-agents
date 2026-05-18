@@ -3,7 +3,7 @@ import { cleanHtml, isObjIncludeKey, dateToISO }  from './utility';
 import responseCreator  from './responseCreator';
 import fetchArticleDetail  from './detailCrawler';
 
-const parseRssItems = async ({ items, keys = {}, fetchDetail = false, detailSelector = {} }) => {
+const parseRssItems = async ({ items, keys = {}, fetchDetail = false, detailSelector = {} }: any) => {
   const defaultKeys = {
     description: keys.description ?? 'description',
     thumbnail: keys.thumbnail ?? 'enclosure',

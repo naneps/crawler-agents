@@ -9,13 +9,13 @@ import { JSDOM } from 'jsdom';
  * @param {Object} selectors - Object containing selectors for custom extraction.
  * @returns {Promise<Object>} - The extracted data.
  */
-const fetchArticleDetail = async (url, selectors = {}) => {
+const fetchArticleDetail = async (url: string, selectors: any = {}) => {
   try {
-    let currentUrl = url;
+    let currentUrl: string | null = url;
     let allContent = '';
     let allContentHtml = '';
-    let firstPageData = null;
-    let firstPageHtml = null;
+    let firstPageData: any = null;
+    let firstPageHtml: any = null;
     let visitedUrls = new Set();
     let pageCount = 0;
 
@@ -52,7 +52,7 @@ const fetchArticleDetail = async (url, selectors = {}) => {
 
       // Detect next page
       const $ = cheerio.load(data);
-      let nextUrl = null;
+      let nextUrl: string | null = null;
 
       // Special case for Tribun: often has "?page=all" which is better
       if (currentUrl.includes('tribunnews.com') && !currentUrl.includes('?page=all')) {
@@ -61,7 +61,7 @@ const fetchArticleDetail = async (url, selectors = {}) => {
         const nextLink = $('a').filter((i, el) => {
           const text = $(el).text().toLowerCase();
           const href = $(el).attr('href');
-          return (
+          return !!(
             href &&
             (text.includes('selanjutnya') || 
              text.includes('next') || 
@@ -70,7 +70,7 @@ const fetchArticleDetail = async (url, selectors = {}) => {
         }).first();
 
         if (nextLink.length > 0) {
-          nextUrl = new URL(nextLink.attr('href'), currentUrl).href;
+          nextUrl = new URL(nextLink.attr('href') || '', currentUrl || '').href;
         }
       }
 
@@ -91,7 +91,7 @@ const fetchArticleDetail = async (url, selectors = {}) => {
       author = author.replace(/\t|\n/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
-    const tags = [];
+    const tags: string[] = [];
     $(tagsSelector).each((i, el) => {
       const tagText = $(el).text().trim();
       if (tagText && !tags.includes(tagText)) tags.push(tagText);
@@ -104,7 +104,7 @@ const fetchArticleDetail = async (url, selectors = {}) => {
       author,
       tags: tags.length > 0 ? tags : null,
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       content: null,
       author: null,

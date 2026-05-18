@@ -10,7 +10,7 @@ const crawler = async (rssUrl, cb, options) => {
       timeout: 10000,
     });
     return await cb(data, options);
-  } catch (error) {
+  } catch (error: any) {
     return responseCreator(error?.message ?? 'Something went wrong');
   }
 };

@@ -21,7 +21,7 @@ const xmlParser = async (xml) => {
     }
 
     return parsed.rss.channel;
-  } catch (error) {
+  } catch (error: any) {
     throw new Error(`XML Parsing Error: ${error.message}`);
   }
 };

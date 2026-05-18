@@ -10,7 +10,7 @@ export const getConfig = (req: Request, res: Response) => {
 };
 
 export const getNews = async (req: Request, res: Response) => {
-    const { source, category } = req.params;
+    const { source, category } = req.params as { source: string, category: string };
     const { fetchDetail } = req.query;
     const cacheKey = `${source}-${category}-${fetchDetail}`;
 
@@ -36,7 +36,7 @@ export const getNews = async (req: Request, res: Response) => {
 };
 
 export const getSourceConfig = (req: Request, res: Response) => {
-    const { source } = req.params;
+    const { source } = req.params as { source: string };
     const config = feedid.getConfig();
     const sourceConfig = config[source];
     
@@ -54,7 +54,7 @@ export const getSourceConfig = (req: Request, res: Response) => {
 };
 
 export const getArticleDetail = async (req: Request, res: Response) => {
-    const { source } = req.params;
+    const { source } = req.params as { source: string };
     const { url } = req.query as { url: string };
 
     if (!url) return res.status(400).json({ success: false, message: 'URL is required' });

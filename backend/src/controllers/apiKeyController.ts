@@ -27,7 +27,7 @@ export const createKey = async (req: Request, res: Response) => {
 };
 
 export const deleteKey = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     try {
         if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
         // id comes in as string from params, but db function expects number
@@ -39,7 +39,7 @@ export const deleteKey = async (req: Request, res: Response) => {
 };
 
 export const getLogs = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     try {
         if (!req.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
         const logs = await db.getApiKeyLogs(req.user.id, parseInt(id));

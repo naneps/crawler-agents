@@ -24,7 +24,7 @@ export const upsertSource = async (req: Request, res: Response) => {
 
 export const deleteSource = async (req: Request, res: Response) => {
     try {
-        await db.deleteSource(req.params.id);
+        await db.deleteSource(req.params.id as string);
         await feedid.init();
         res.json({ success: true, message: 'Source deleted' });
     } catch (error: any) {

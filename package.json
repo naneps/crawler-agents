@@ -3,7 +3,7 @@
   "version": "2.5.0",
   "description": "Premium News Intelligence & Aggregator Platform",
   "scripts": {
-    "start": "cd backend && ts-node server.ts",
+    "start": "cd backend && npm run start",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",

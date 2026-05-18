@@ -34,7 +34,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         const adminEmail = process.env.ADMIN_EMAIL;
         const isOwner = !!(user.email && adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase());
 
-        let localUser = await db.getUserById(user.id);
+        let localUser: any = await db.getUserById(user.id);
         
         if (!localUser && user.email) {
            // Fallback: check if they exist by email (username) but with a different ID

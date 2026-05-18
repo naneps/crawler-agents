@@ -46,7 +46,8 @@ export const upsertPlan = async (req: Request, res: Response) => {
 
 export const deletePlan = async (req: Request, res: Response) => {
     try {
-        await db.deletePlan(parseInt(req.params.id));
+        const { id } = req.params as { id: string };
+        await db.deletePlan(parseInt(id));
         res.json({ success: true });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
@@ -65,8 +66,9 @@ export const getSubscriptions = async (req: Request, res: Response) => {
 export const setUserPlan = async (req: Request, res: Response) => {
     try {
         const { planName } = req.body;
+        const { id } = req.params as { id: string };
         // The id passed might be an integer based on the old schema, but we changed to string
-        await db.setUserPlan(req.params.id, planName);
+        await db.setUserPlan(id, planName);
         res.json({ success: true });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
