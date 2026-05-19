@@ -1,4 +1,6 @@
 import React from 'react';
+import axios from 'axios';
+import { supabase } from '@/lib/supabase';
 import { Terminal, Lock, Globe, Cpu, Copy, Check, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -59,6 +61,27 @@ const endpoints = [
 
 export default function ApiReference() {
   const [copied, setCopied] = React.useState('');
+  const [apiKey, setApiKey] = React.useState('your-api-key-here');
+  const [sessionToken, setSessionToken] = React.useState('your-jwt-session-token');
+
+  React.useEffect(() => {
+    // Fetch user keys to pre-fill the API key in the Postman/Bruno collection
+    axios.get('/api/user/keys')
+      .then(res => {
+        const keys = res.data.keys || [];
+        if (keys.length > 0) {
+          setApiKey(keys[0].key_value);
+        }
+      })
+      .catch(err => console.error('Failed to pre-fill API Key in docs:', err));
+
+    // Fetch session token to pre-fill session token in the Postman/Bruno collection
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setSessionToken(session.access_token);
+      }
+    });
+  }, []);
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
@@ -333,12 +356,12 @@ export default function ApiReference() {
         },
         {
           key: "apiKey",
-          value: "your-api-key-here",
+          value: apiKey,
           type: "string"
         },
         {
           key: "sessionToken",
-          value: "your-jwt-session-token",
+          value: sessionToken,
           type: "string"
         }
       ]
