@@ -1,5 +1,5 @@
 import React from 'react';
-import { Terminal, Lock, Globe, Cpu, Copy, Check } from 'lucide-react';
+import { Terminal, Lock, Globe, Cpu, Copy, Check, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ const endpoints = [
   {
     group: 'Discovery',
     items: [
-      { method: 'GET', path: '/api/config', desc: 'List all intelligence sources and categories', auth: true },
+      { method: 'GET', path: '/api/sources', desc: 'List all news sources and categories', auth: true },
       { method: 'GET', path: '/api/news/:source/categories', desc: 'Get specific categories for a source', auth: true },
     ]
   },
@@ -51,8 +51,7 @@ const endpoints = [
   {
     group: 'System Management',
     items: [
-      { method: 'GET', path: '/api/sources', desc: 'List all raw crawlers', auth: 'admin' },
-      { method: 'POST', path: '/api/sources', desc: 'Upsert intelligence crawler configuration', auth: 'admin' },
+      { method: 'POST', path: '/api/sources', desc: 'Upsert crawler configuration', auth: 'admin' },
       { method: 'DELETE', path: '/api/sources/:id', desc: 'Decommission a crawler', auth: 'admin' },
     ]
   }
@@ -65,6 +64,295 @@ export default function ApiReference() {
     navigator.clipboard.writeText(text);
     setCopied(text);
     setTimeout(() => setCopied(''), 2000);
+  };
+
+  const downloadCollection = () => {
+    const origin = window.location.origin || "http://localhost:3000";
+    const collection = {
+      info: {
+        _postman_id: "c62fb4bf-4ad4-4d8b-967a-59b4317f29f0",
+        name: "CrawlGen API Collection",
+        description: "API collection for CrawlGen News Aggregator (compatible with Postman and Bruno)",
+        schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+      },
+      item: [
+        {
+          name: "Authentication",
+          item: [
+            {
+              name: "Login",
+              request: {
+                method: "POST",
+                header: [
+                  {
+                    key: "Content-Type",
+                    value: "application/json"
+                  }
+                ],
+                body: {
+                  mode: "raw",
+                  raw: JSON.stringify({ username: "admin@admin.com", password: "password123" }, null, 2)
+                },
+                url: {
+                  raw: "{{baseUrl}}/api/auth/login",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "auth", "login"]
+                }
+              }
+            },
+            {
+              name: "Get Current User",
+              request: {
+                method: "GET",
+                header: [
+                  {
+                    key: "Authorization",
+                    value: "Bearer {{sessionToken}}"
+                  }
+                ],
+                url: {
+                  raw: "{{baseUrl}}/api/auth/me",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "auth", "me"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "Discovery",
+          item: [
+            {
+              name: "List Sources",
+              request: {
+                method: "GET",
+                header: [
+                  {
+                    key: "x-api-key",
+                    value: "{{apiKey}}"
+                  }
+                ],
+                url: {
+                  raw: "{{baseUrl}}/api/sources",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "sources"]
+                }
+              }
+            },
+            {
+              name: "Get Source Categories",
+              request: {
+                method: "GET",
+                header: [
+                  {
+                    key: "x-api-key",
+                    value: "{{apiKey}}"
+                  }
+                ],
+                url: {
+                  raw: "{{baseUrl}}/api/news/:source/categories",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "news", ":source", "categories"],
+                  variable: [
+                    {
+                      key: "source",
+                      value: "cnbc"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "News Feed",
+          item: [
+            {
+              name: "Get Latest News",
+              request: {
+                method: "GET",
+                header: [
+                  {
+                    key: "x-api-key",
+                    value: "{{apiKey}}"
+                  }
+                ],
+                url: {
+                  raw: "{{baseUrl}}/api/news/:source?fetchDetail=false",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "news", ":source"],
+                  query: [
+                    {
+                      key: "fetchDetail",
+                      value: "false"
+                    }
+                  ],
+                  variable: [
+                    {
+                      key: "source",
+                      value: "cnbc"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              name: "Get News by Category",
+              request: {
+                method: "GET",
+                header: [
+                  {
+                    key: "x-api-key",
+                    value: "{{apiKey}}"
+                  }
+                ],
+                url: {
+                  raw: "{{baseUrl}}/api/news/:source/:category?fetchDetail=false",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "news", ":source", ":category"],
+                  query: [
+                    {
+                      key: "fetchDetail",
+                      value: "false"
+                    }
+                  ],
+                  variable: [
+                    {
+                      key: "source",
+                      value: "cnbc"
+                    },
+                    {
+                      key: "category",
+                      value: "news"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              name: "Get Article Detail",
+              request: {
+                method: "GET",
+                header: [
+                  {
+                    key: "x-api-key",
+                    value: "{{apiKey}}"
+                  }
+                ],
+                url: {
+                  raw: "{{baseUrl}}/api/news/:source/detail?url=https://example.com/article",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "news", ":source", "detail"],
+                  query: [
+                    {
+                      key: "url",
+                      value: "https://example.com/article"
+                    }
+                  ],
+                  variable: [
+                    {
+                      key: "source",
+                      value: "cnbc"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "API Keys",
+          item: [
+            {
+              name: "Get Quota & Usage",
+              request: {
+                method: "GET",
+                header: [
+                  {
+                    key: "Authorization",
+                    value: "Bearer {{sessionToken}}"
+                  }
+                ],
+                url: {
+                  raw: "{{baseUrl}}/api/user/quota",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "user", "quota"]
+                }
+              }
+            },
+            {
+              name: "List API Keys",
+              request: {
+                method: "GET",
+                header: [
+                  {
+                    key: "Authorization",
+                    value: "Bearer {{sessionToken}}"
+                  }
+                ],
+                url: {
+                  raw: "{{baseUrl}}/api/user/keys",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "user", "keys"]
+                }
+              }
+            },
+            {
+              name: "Create API Key",
+              request: {
+                method: "POST",
+                header: [
+                  {
+                    key: "Authorization",
+                    value: "Bearer {{sessionToken}}"
+                  },
+                  {
+                    key: "Content-Type",
+                    value: "application/json"
+                  }
+                ],
+                body: {
+                  mode: "raw",
+                  raw: JSON.stringify({ name: "Production Key" }, null, 2)
+                },
+                url: {
+                  raw: "{{baseUrl}}/api/user/keys",
+                  host: ["{{baseUrl}}"],
+                  path: ["api", "user", "keys"]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      variable: [
+        {
+          key: "baseUrl",
+          value: origin,
+          type: "string"
+        },
+        {
+          key: "apiKey",
+          value: "your-api-key-here",
+          type: "string"
+        },
+        {
+          key: "sessionToken",
+          value: "your-jwt-session-token",
+          type: "string"
+        }
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(collection, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'CrawlGen_API_Collection.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -81,8 +369,16 @@ export default function ApiReference() {
               Integrate CrawlGen Intelligence into your own applications via our programmatic REST interface.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest bg-muted/50 px-4 py-2 rounded-lg border border-border/50">
-            Base URL: <code className="text-foreground ml-1">http://localhost:3000</code>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
+            <Button
+              onClick={downloadCollection}
+              className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all duration-300 transform hover:scale-[1.02]"
+            >
+              <Download className="w-4 h-4" /> Download API Collection
+            </Button>
+            <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest bg-muted/50 px-4 py-2.5 rounded-xl border border-border/50 h-10">
+              Base URL: <code className="text-foreground ml-1">{window.location.origin || "http://localhost:3000"}</code>
+            </div>
           </div>
         </div>
 

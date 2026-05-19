@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe, Calendar, ExternalLink, User, Clock, Share2 } from 'lucide-react';
+import { ArrowLeft, Globe, Calendar, ExternalLink, User, Clock, Share2, Link, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,10 @@ import { Separator } from '@/components/ui/separator';
 
 export default function ArticleDetail({ article, sourceName, onBack, loading }) {
   if (!article) return null;
+
+  const displaySourceName = article.sourceName || sourceName;
+  const baseUrl = article.sourceBaseUrl;
+  const articleUrl = article.articleUrl || article.link;
 
   return (
     <ScrollArea className="h-full bg-background animate-in fade-in duration-500">
@@ -27,16 +31,20 @@ export default function ArticleDetail({ article, sourceName, onBack, loading }) 
           </Button>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg">
-              <Share2 className="w-4 h-4" />
-            </Button>
+            {articleUrl && (
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg" asChild>
+                <a href={articleUrl} target="_blank" rel="noopener noreferrer" title="Copy article URL">
+                  <Share2 className="w-4 h-4" />
+                </a>
+              </Button>
+            )}
           </div>
         </div>
 
         <div className="space-y-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Badge variant="secondary" className="px-3 py-1 text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary border-none">
-              {sourceName}
+              {displaySourceName}
             </Badge>
             <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
               <Clock className="w-3 h-3" />
@@ -58,6 +66,36 @@ export default function ArticleDetail({ article, sourceName, onBack, loading }) 
                 <User className="w-3.5 h-3.5 text-primary" />
                 <span className="text-foreground">{article.author}</span>
               </div>
+            )}
+          </div>
+
+          {/* Source & URL info row */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {baseUrl && (
+              <a
+                href={baseUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors group"
+              >
+                <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors shrink-0">
+                  <Globe className="w-3 h-3" />
+                </div>
+                <span className="truncate max-w-[200px]">{baseUrl.replace(/^https?:\/\//, '')}</span>
+              </a>
+            )}
+            {articleUrl && (
+              <a
+                href={articleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors group"
+              >
+                <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors shrink-0">
+                  <Link className="w-3 h-3" />
+                </div>
+                <span className="truncate max-w-xs opacity-70">{articleUrl}</span>
+              </a>
             )}
           </div>
         </div>
@@ -87,14 +125,35 @@ export default function ArticleDetail({ article, sourceName, onBack, loading }) 
           />
         )}
 
-        <div className="pt-10 space-y-6">
+        {/* Tags */}
+        {article.tags && article.tags.length > 0 && (
+          <div className="pt-4 space-y-3">
+            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+              <Tag className="w-3 h-3" />
+              <span>Tags</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {article.tags.map((tag, i) => (
+                <Badge
+                  key={i}
+                  variant="outline"
+                  className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-background/50 border-border/50 hover:border-primary/50 hover:text-primary transition-colors cursor-default"
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="pt-6 space-y-6">
           <Separator className="opacity-50" />
           <div className="flex flex-col sm:flex-row gap-4">
             <Button 
               className="flex-1 h-14 rounded-xl text-xs font-black uppercase tracking-widest gap-3 shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"
               asChild
             >
-              <a href={article.link} target="_blank" rel="noopener noreferrer">
+              <a href={articleUrl || article.link} target="_blank" rel="noopener noreferrer">
                 Explore Full Intelligence
                 <ExternalLink className="w-4 h-4" />
               </a>

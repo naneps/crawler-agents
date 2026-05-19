@@ -25,6 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/lib/supabase';
 
 import ArticleCard from './components/ArticleCard';
+import ArticleCardSkeleton from './components/ArticleCardSkeleton';
 import ArticleDetail from './components/ArticleDetail';
 import Sidebar from './components/Sidebar';
 import SourceEditorForm from './components/SourceForm';
@@ -77,6 +78,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [sources, setSources] = useState({});
   const [articles, setArticles] = useState([]);
+  const [articlesLoading, setArticlesLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dialog, setDialog] = useState({ isOpen: false });
@@ -206,8 +208,14 @@ export default function App() {
     if (user) fetchSources();
   }, [user]);
 
+  // Immediately clear articles and flag loading when source/category changes
+  // This prevents stale data from the previous source showing during fetch
   useEffect(() => {
-    if (user && currentSource) fetchArticles();
+    if (user && currentSource) {
+      setArticles([]);
+      setArticlesLoading(true);
+      fetchArticles();
+    }
   }, [user, currentSource, currentCategory]);
 
   useEffect(() => {
@@ -240,6 +248,8 @@ export default function App() {
     } catch (e) {
       console.error(e);
       setArticles([]);
+    } finally {
+      setArticlesLoading(false);
     }
   };
 
@@ -249,7 +259,15 @@ export default function App() {
     try {
       const res = await axios.get(`/api/news/${currentSource}/detail?url=${encodeURIComponent(article.link)}`);
       if (res.data.success) {
-        setSelectedArticle({ ...article, contentHtml: res.data.data.contentHtml });
+        setSelectedArticle({
+          ...article,
+          contentHtml: res.data.data.contentHtml,
+          author: res.data.data.author || article.author,
+          tags: res.data.data.tags,
+          sourceBaseUrl: res.data.data.source?.baseUrl,
+          sourceName: res.data.data.source?.name,
+          articleUrl: res.data.data.articleUrl,
+        });
       }
     } catch (e) {
       console.error(e);
@@ -342,18 +360,18 @@ export default function App() {
             </div>
             <div className="min-w-0">
               <h2 className="text-sm font-bold text-foreground tracking-tight line-clamp-1">
-                {activeTab === 'feed' ? (sources[currentSource]?.name || 'Neural Stream') : 
+                {activeTab === 'feed' ? (sources[currentSource]?.name || 'News Feed') : 
                  activeTab === 'sources' ? 'Source Management' : 
                  activeTab === 'keys' ? 'API Keys' : 
                  activeTab === 'dashboard' ? 'Platform Analytics' :
-                 activeTab === 'admin-users' ? 'Operator Matrix' :
-                 activeTab === 'admin-plans' ? 'Neural Tiers' :
-                 activeTab === 'docs' ? 'API Reference' : 'CrawlGen Intelligence'}
+                 activeTab === 'admin-users' ? 'Users' :
+                 activeTab === 'admin-plans' ? 'Subscription Plans' :
+                 activeTab === 'docs' ? 'API Reference' : 'CrawlGen'}
               </h2>
               <div className="flex items-center gap-1.5">
                 <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
-                  {activeTab === 'feed' ? 'Neural Stream Active' : 'System Node Secure'}
+                  {activeTab === 'feed' ? 'Live' : 'All Systems Normal'}
                 </span>
               </div>
             </div>
@@ -402,17 +420,30 @@ export default function App() {
                 <ScrollArea className="h-full">
                   <div className="p-6 md:p-8">
                     <div className="max-w-[1600px] mx-auto">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-                        {Array.isArray(articles) && articles.map((article, idx) => (
-                          <ArticleCard 
-                            key={idx} 
-                            article={article} 
-                            sourceName={sources[currentSource]?.name}
-                            onClick={() => fetchArticleDetail(article)}
-                            idx={idx}
-                          />
-                        ))}
-                      </div>
+                      {articlesLoading ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                          {Array.from({ length: 8 }).map((_, idx) => (
+                            <ArticleCardSkeleton key={idx} idx={idx} />
+                          ))}
+                        </div>
+                      ) : articles.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-30">
+                          <Activity className="w-10 h-10" />
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">No articles found</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                          {articles.map((article, idx) => (
+                            <ArticleCard 
+                              key={idx} 
+                              article={article} 
+                              sourceName={sources[currentSource]?.name}
+                              onClick={() => fetchArticleDetail(article)}
+                              idx={idx}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </ScrollArea>

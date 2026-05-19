@@ -102,16 +102,16 @@ export default function UserManager({ cache, setCache }) {
           <div className="space-y-1">
             <h2 className="text-xl font-black tracking-tighter text-foreground uppercase flex items-center gap-2.5">
               <Users className="w-5 h-5 text-primary" />
-              Node Operators
+              Users
             </h2>
             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider opacity-70">
-              Oversee user access, roles, and intelligence quotas
+              Manage user accounts, roles, and API quotas
             </p>
           </div>
           <div className="relative group w-full md:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input 
-              placeholder="Search operators..."
+              placeholder="Search users..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="h-11 pl-10 rounded-xl bg-muted/40 border-none text-[10px] font-black uppercase tracking-widest focus-visible:ring-primary/30"
@@ -126,11 +126,11 @@ export default function UserManager({ cache, setCache }) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50 border-border/50">
-                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Operator</TableHead>
-                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Clearance</TableHead>
-                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Protocol</TableHead>
-                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Deployment</TableHead>
-                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground text-right">Ops</TableHead>
+                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">User</TableHead>
+                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Role</TableHead>
+                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Plan & Usage</TableHead>
+                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Joined</TableHead>
+                  <TableHead className="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

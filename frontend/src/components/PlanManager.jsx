@@ -132,7 +132,7 @@ export default function PlanManager({ cache, setCache }) {
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-black tracking-tight text-foreground uppercase">Neural Tiers</h2>
+              <h2 className="text-sm font-black tracking-tight text-foreground uppercase">Subscription Plans</h2>
               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">
                 Subscription & Quota Control
               </p>
@@ -208,7 +208,7 @@ export default function PlanManager({ cache, setCache }) {
                    onClick={() => handleEdit(plan)}
                    className="w-full h-7 rounded-lg text-[8px] font-black uppercase tracking-widest border-border/50 hover:bg-muted"
                  >
-                   Manage Node
+                   Edit Plan
                  </Button>
               </div>
             </div>
@@ -221,7 +221,7 @@ export default function PlanManager({ cache, setCache }) {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-card border border-border w-full max-w-md shadow-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/20">
-              <h3 className="text-xs font-black uppercase tracking-widest">{editingPlan ? 'Configure Tier' : 'New Tier'}</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest">{editingPlan ? 'Edit Plan' : 'New Plan'}</h3>
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setIsModalOpen(false)}>
                 <X className="w-4 h-4" />
               </Button>

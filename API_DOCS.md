@@ -13,25 +13,27 @@ Most endpoints require authentication. CrawlGen Intelligence supports two method
 
 ## 🛰️ Public / News Endpoints
 
-### 1. Get System Configuration
+### 1. List News Sources
 Retrieve available news sources and their categories.
-*   **URL**: `/api/config`
+*   **URL**: `/api/sources`
 *   **Method**: `GET`
 *   **Auth**: Required (API Key or Session)
 *   **Response Example**:
     ```json
-    {
-      "antara": {
+    [
+      {
+        "id": "antara",
         "name": "Antara News",
         "baseUrl": "https://www.antaranews.com",
         "categories": ["terbaru", "politik", "ekonomi"]
       },
-      "cnbc": {
+      {
+        "id": "cnbc",
         "name": "CNBC Indonesia",
         "baseUrl": "https://www.cnbcindonesia.com",
         "categories": ["news", "market"]
       }
-    }
+    ]
     ```
 
 ### 2. List Source Categories
@@ -81,9 +83,6 @@ Extract full content and metadata for a specific article URL.
 ## 🔐 Administrative Endpoints
 *Requires Admin Role*
 
-### 4. List All Sources
-*   **URL**: `/api/sources`
-*   **Method**: `GET`
 
 ### 5. Create/Update Source
 *   **URL**: `/api/sources`

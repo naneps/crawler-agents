@@ -70,13 +70,13 @@ router.post('/user/key/rotate', requireAuth, authController.rotateApiKey);
  */
 /**
  * @swagger
- * /api/config:
+ * /api/sources:
  *   get:
  *     summary: List All Sources & Config
  *     tags: [Discovery]
- *     description: Returns the complete system configuration including all sources and their available categories.
+ *     description: Returns the complete list of sources and their available categories.
  */
-router.get('/config', requireCredential, newsController.getConfig);
+router.get('/sources', requireCredential, newsController.getSources);
 
 /**
  * @swagger
@@ -124,7 +124,6 @@ router.delete('/admin/plans/:id', requireAdmin, adminController.deletePlan);
 
 router.get('/admin/subscriptions', requireAdmin, adminController.getSubscriptions);
 
-router.get('/sources', requireAdmin, sourceController.getAllSources);
 router.post('/sources', requireAdmin, sourceController.upsertSource);
 router.delete('/sources/:id', requireAdmin, sourceController.deleteSource);
 

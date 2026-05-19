@@ -5,8 +5,16 @@ import fetchArticleDetail from '../utils/detailCrawler';
 
 const newsCache = new NodeCache({ stdTTL: 300 });
 
-export const getConfig = (req: Request, res: Response) => {
-    res.json(feedid.getConfig());
+export const getSources = (req: Request, res: Response) => {
+    const config = feedid.getConfig();
+    const sourcesArray = Object.entries(config).map(([id, src]: any) => ({
+        id,
+        name: src.name,
+        baseUrl: src.baseUrl,
+        categories: src.categories,
+        selectors: src.selectors
+    }));
+    res.json(sourcesArray);
 };
 
 export const getNews = async (req: Request, res: Response) => {
@@ -62,13 +70,20 @@ export const getArticleDetail = async (req: Request, res: Response) => {
     try {
         const config = feedid.getConfig();
         const sourceConfig = config[source];
-        // Even if source is not found, we can try with default selectors, but better to enforce
         if (!sourceConfig) return res.status(404).json({ success: false, message: 'Source not found' });
 
         const details = await fetchArticleDetail(url, sourceConfig.selectors || {});
         res.json({
             success: true,
-            data: details
+            data: {
+                ...details,
+                source: {
+                    id: source,
+                    name: sourceConfig.name,
+                    baseUrl: sourceConfig.baseUrl,
+                },
+                articleUrl: url,
+            }
         });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });

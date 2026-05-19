@@ -161,10 +161,10 @@ function SourcesSection({ sources, loading }) {
       <div className="text-center mb-16">
         <span className="font-mono text-[11px] text-primary uppercase tracking-[0.2em] font-bold block mb-3">// sources</span>
         <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-4">
-          A Growing Intelligence Network
+          News Sources We Cover
         </h2>
         <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-          We continuously add new sources to our crawler cluster. Missing one? Request it and we'll integrate it for you.
+          We continuously add new sources. Missing one? Request it and we'll integrate it for you.
         </p>
       </div>
 
@@ -320,7 +320,7 @@ function AuthSection({ user }) {
               <ShieldCheck className="w-10 h-10 text-primary" />
            </div>
            <h2 className="text-3xl font-black tracking-tight">You are already Authenticated</h2>
-           <p className="text-muted-foreground">Welcome back, <span className="text-foreground font-bold">{user.username}</span>. Your neural link is active and secure.</p>
+           <p className="text-muted-foreground">Welcome back, <span className="text-foreground font-bold">{user.username}</span>. Your account is active.</p>
            <Button size="lg" className="h-14 px-10 gap-2 font-bold" onClick={() => navigate('/feed')}>
               Enter Dashboard <ArrowRight className="w-4 h-4" />
            </Button>
@@ -385,8 +385,8 @@ function AuthSection({ user }) {
               <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto shadow-lg rotate-3 mb-6">
                 <Radio className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="font-black text-2xl mb-2">Access Neural Link</h3>
-              <p className="text-muted-foreground text-sm font-medium">Authenticate to provision your API credentials.</p>
+              <h3 className="font-black text-2xl mb-2">Sign In to Continue</h3>
+              <p className="text-muted-foreground text-sm font-medium">Sign in to get your API key instantly.</p>
             </div>
 
             {errorMsg && (

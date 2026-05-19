@@ -1,6 +1,6 @@
 const { default: axios } = require('axios');
 import { Readability } from '@mozilla/readability';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';   // cheerio v1 uses named exports, no default export
 import { JSDOM } from 'jsdom';
 
 /**
@@ -15,8 +15,8 @@ const fetchArticleDetail = async (url: string, selectors: any = {}) => {
     let allContent = '';
     let allContentHtml = '';
     let firstPageData: any = null;
-    let firstPageHtml: any = null;
-    let visitedUrls = new Set();
+    let firstPageHtml: string | null = null;
+    let visitedUrls = new Set<string>();
     let pageCount = 0;
 
     while (currentUrl && !visitedUrls.has(currentUrl) && pageCount < 10) {
@@ -25,13 +25,23 @@ const fetchArticleDetail = async (url: string, selectors: any = {}) => {
 
       const { data } = await axios.get(currentUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Referer': 'https://www.google.com/',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'cross-site',
+          'Upgrade-Insecure-Requests': '1',
         },
         timeout: 30000,
       });
 
       if (!firstPageHtml) {
-        firstPageHtml = data;
+        firstPageHtml = data as string;
       }
 
       const dom = new JSDOM(data, { url: currentUrl });
@@ -63,8 +73,8 @@ const fetchArticleDetail = async (url: string, selectors: any = {}) => {
           const href = $(el).attr('href');
           return !!(
             href &&
-            (text.includes('selanjutnya') || 
-             text.includes('next') || 
+            (text.includes('selanjutnya') ||
+             text.includes('next') ||
              (text.trim().match(/^\d+$/) && parseInt(text.trim()) === pageCount + 1))
           );
         }).first();
@@ -79,6 +89,18 @@ const fetchArticleDetail = async (url: string, selectors: any = {}) => {
       } else {
         currentUrl = null;
       }
+    }
+
+    // Guard: if firstPageHtml is still null (loop never ran), return empty
+    if (!firstPageHtml) {
+      return {
+        content: null,
+        contentHtml: null,
+        excerpt: null,
+        author: null,
+        tags: null,
+        error: 'Could not fetch any page content',
+      };
     }
 
     // Extract tags and refine author from the first page's raw HTML
@@ -105,11 +127,15 @@ const fetchArticleDetail = async (url: string, selectors: any = {}) => {
       tags: tags.length > 0 ? tags : null,
     };
   } catch (error: any) {
+    const message = error.response
+      ? `HTTP ${error.response.status} ${error.response.statusText}`
+      : error.message;
     return {
       content: null,
+      contentHtml: null,
       author: null,
       tags: null,
-      error: error.response ? `${error.response.status} ${error.response.statusText}` : error.message,
+      error: message,
     };
   }
 };

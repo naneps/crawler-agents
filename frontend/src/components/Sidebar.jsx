@@ -38,11 +38,11 @@ export default function Sidebar({
         <ScrollArea className="flex-1 px-3 py-4">
           <div className="space-y-6">
             <div className="space-y-1">
-              <p className="px-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3">Core Engine</p>
+              <p className="px-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3">Menu</p>
               {[
                 ...(user.role === 'admin' ? [{ id: 'dashboard', icon: TrendingUp, label: 'Platform Analytics', path: '/admin/dashboard' }] : []),
-                ...(user.role === 'admin' ? [{ id: 'admin-users', icon: Users, label: 'Operator Matrix', path: '/admin/users' }] : []),
-                ...(user.role === 'admin' ? [{ id: 'admin-plans', icon: Zap, label: 'Neural Tiers', path: '/admin/plans' }] : []),
+                ...(user.role === 'admin' ? [{ id: 'admin-users', icon: Users, label: 'Users', path: '/admin/users' }] : []),
+                ...(user.role === 'admin' ? [{ id: 'admin-plans', icon: Zap, label: 'Plans', path: '/admin/plans' }] : []),
                 { id: 'feed', icon: LayoutDashboard, label: 'Feed Explorer', path: '/feed' },
                 ...(user.role === 'admin' ? [{ id: 'sources', icon: Database, label: 'Source Management', path: '/sources' }] : []),
                 { id: 'docs', icon: Terminal, label: 'API Reference', path: '/docs' },
@@ -68,7 +68,7 @@ export default function Sidebar({
 
             <div className="space-y-1">
               <div className="flex items-center justify-between px-2 mb-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Active Streams</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">News Sources</p>
                 <Badge variant="outline" className="h-4 px-1 text-[9px] font-black">{Object.keys(sources).length}</Badge>
               </div>
               <div className="space-y-1">

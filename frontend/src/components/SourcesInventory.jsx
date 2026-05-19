@@ -20,17 +20,17 @@ export default function SourcesInventory({ sourcesList, onAdd, onEdit, onDelete 
           <div className="space-y-1">
             <h2 className="text-xl font-black tracking-tighter text-foreground uppercase flex items-center gap-2.5">
               <Database className="w-5 h-5 text-primary" />
-              Intelligence Repository
+              News Sources
             </h2>
             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider opacity-70">
-              Manage global news aggregation nodes and extraction logic
+              Manage crawler sources and their extraction configs
             </p>
           </div>
           <Button 
             onClick={onAdd} 
             className="rounded-lg px-6 h-10 text-[10px] font-black uppercase tracking-widest gap-2 shadow-lg shadow-primary/20"
           >
-            <Plus className="w-4 h-4" /> Add Neural Node
+            <Plus className="w-4 h-4" /> Add Source
           </Button>
         </div>
       </div>
@@ -41,10 +41,10 @@ export default function SourcesInventory({ sourcesList, onAdd, onEdit, onDelete 
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="h-11 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Source Identity</TableHead>
-                  <TableHead className="h-11 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Identifier</TableHead>
-                  <TableHead className="h-11 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Neural Root</TableHead>
-                  <TableHead className="h-11 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Operations</TableHead>
+                  <TableHead className="h-11 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Source Name</TableHead>
+                  <TableHead className="h-11 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">ID</TableHead>
+                  <TableHead className="h-11 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Base URL</TableHead>
+                  <TableHead className="h-11 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -53,7 +53,7 @@ export default function SourcesInventory({ sourcesList, onAdd, onEdit, onDelete 
                     <TableCell colSpan={4} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-2 opacity-30">
                         <Database className="w-8 h-8" />
-                        <p className="text-[10px] font-black uppercase tracking-widest">No intelligence sources found</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest">No sources found</p>
                       </div>
                     </TableCell>
                   </TableRow>
